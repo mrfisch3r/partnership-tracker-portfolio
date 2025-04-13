@@ -39,6 +39,7 @@ def is_duplicate_entry(model, name, organization_name):
     
     return existing_entry is not None  # Returns True if a duplicate exists
 
+
 def sort_entries_by_date(model, column_name, ascending=True):
     """
     Sort entries in the given model (table) by the specified date column.
@@ -102,6 +103,7 @@ def events_sheet_reader(file_path, sheet_keywords, model):
         model(
             name=row["name"],
             organization_name=row["organization_name"],
+            contacts=row["contacts"],
             target_population=row["target_population"],
             event_dates=row["event_dates"],
             reoccuring_event=row["reoccuring_event"],
@@ -165,6 +167,7 @@ def potential_partnerships_sheet_reader(file_path):
         PotentialPartnerships(
             name=row["name"],
             organization_name=row["organization_name"],
+            contacts=row["contacts"],
             target_population=row["target_population"],
             contact_date=row["contact_date"],
             next_contact=row["next_contact"],
@@ -220,6 +223,7 @@ def not_potential_partnerships_sheet_reader(file_path):
         NotPotentialPartnerships(
             name=row["name"],
             organization_name=row["organization_name"],
+            contacts=row["contacts"],
             target_population=row["target_population"],
             contact_date=row["contact_date"],
             contact_attempt=row["contact_attempt"],
