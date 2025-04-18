@@ -40,7 +40,7 @@ let dummyData = [
 async function GetData()
 {
   try {
-    const res = await fetch('http://127.0.0.1:5000/api/data');
+    const res = await fetch('http://127.0.0.1:5000/api/get_partners');
     const dummyData = await res.json();
     document.getElementById('response').innerText = dummyData.message;
     console.log(dummyData)
@@ -58,7 +58,7 @@ const PartnershipTable = ({ filters, onPartnerSelect }) => {
   // Fetch partners from the Flask API
   const GetData = async () => {
     try {
-      const res = await fetch('http://127.0.0.1:5000/api/partners');
+      const res = await fetch('http://127.0.0.1:5000/api/get_partners');
       const data = await res.json();
       setPartners(data); // ✅ store in state
       console.log(data)
