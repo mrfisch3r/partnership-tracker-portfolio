@@ -218,3 +218,35 @@ button {
   margin-top: 0.5rem;
   font-size: 0.9rem;
 }
+
+/* Navigation Buttons Container */
+.nav-buttons {
+  padding: 1rem;
+  background-color: #f8f8f8;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  gap: 1rem; /* Space between buttons */
+}
+
+/* Individual Navigation Button Styling */
+.nav-buttons button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0;
+  transition: all 0.2s ease; /* Smooth hover/active transitions */
+}
+
+/* Hover effect for navigation buttons */
+.nav-buttons button:hover {
+  background-color: #f0f0f0;
+}
+
+/* Style for the currently active navigation button */
+.nav-buttons button.active {
+  background-color: #333;
+  color: white;
+  border-color: #333;
+}
