@@ -1,15 +1,15 @@
 import React from 'react';
 
 const PartnerDetailsSection = ({ partner, onClose, onComments }) => {
- 
-  //TODO: if needed, replace these details with data from Flask API response
   return (
     <div className="partner-details">
       <button className="close-button" onClick={onClose}>X</button>
       <h3>Details for {partner.name}</h3>
+      <p><strong>Organization:</strong> {partner.organization_name}</p>  {/* ← NEW */}
       <p><strong>County:</strong> {partner.county}</p>
       <p><strong>Status:</strong> {partner.status}</p>
-      <p><strong>Last Updated:</strong> {partner.lastUpdated}</p>
+      <p><strong>Last Updated:</strong> {partner.contact_date}</p>
+
       <h4>Contact Information</h4>
       <table>
         <thead>
@@ -21,16 +21,17 @@ const PartnerDetailsSection = ({ partner, onClose, onComments }) => {
           </tr>
         </thead>
         <tbody>
-          {partner.contacts && partner.contacts.map((contact, index) => (
-            <tr key={index}>
-              <td>{contact.name}</td>
-              <td>{contact.address}</td>
-              <td>{contact.phone}</td>
-              <td>{contact.email}</td>
+          {partner.contacts && partner.contacts.map((c, i) => (
+            <tr key={i}>
+              <td>{c.name}</td>
+              <td>{c.address}</td>
+              <td>{c.phone}</td>
+              <td>{c.email}</td>
             </tr>
           ))}
         </tbody>
       </table>
+
       <button onClick={onComments}>Comments</button>
     </div>
   );
