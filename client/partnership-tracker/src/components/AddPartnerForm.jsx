@@ -60,48 +60,57 @@ const AddPartnerForm = ({ onPartnerAdded }) => {
       <h2>Add New Community Partner</h2>
       <form onSubmit={handleSubmit}>
         <div>
-          <label>Name:</label>
+          <label htmlFor="name">Name:</label>
           <input 
+            id="name"
             type="text" 
             name="name" 
             value={formData.name}
             onChange={handleChange} 
             required 
+            placeholder="Contact name"
           />
         </div>
         
         <div>
-          <label>Organization Name:</label>
+          <label htmlFor="organization_name">Organization:</label>
           <input 
+            id="organization_name"
             type="text" 
             name="organization_name" 
             value={formData.organization_name}
             onChange={handleChange} 
             required 
+            placeholder="Organization name"
           />
         </div>
         
         <div>
-          <label>Contacts:</label>
+          <label htmlFor="contacts">Contact Details:</label>
           <textarea
+            id="contacts"
             name="contacts"
             value={formData.contacts}
             onChange={handleChange}
+            placeholder="Phone numbers, email addresses, etc."
           />
         </div>
         
         <div>
-          <label>Target Population:</label>
+          <label htmlFor="target_population">Target Population:</label>
           <textarea
+            id="target_population"
             name="target_population"
             value={formData.target_population}
             onChange={handleChange}
+            placeholder="Describe the population this partnership aims to serve"
           />
         </div>
         
         <div>
-          <label>Contact Date:</label>
+          <label htmlFor="contact_date">Contact Date:</label>
           <input
+            id="contact_date"
             type="date"
             name="contact_date"
             value={formData.contact_date}
@@ -111,21 +120,25 @@ const AddPartnerForm = ({ onPartnerAdded }) => {
         </div>
         
         <div>
-          <label>Next Contact:</label>
+          <label htmlFor="next_contact">Next Follow-up Plan:</label>
           <input
+            id="next_contact"
             type="text"
             name="next_contact"
             value={formData.next_contact}
             onChange={handleChange}
+            placeholder="When to contact next (e.g., 'Call back in May')"
           />
         </div>
         
         <div>
-          <label>Notes:</label>
+          <label htmlFor="notes">Notes:</label>
           <textarea
+            id="notes"
             name="notes"
             value={formData.notes}
             onChange={handleChange}
+            placeholder="Any additional notes about this partnership"
           />
         </div>
 
