@@ -4,9 +4,11 @@ const AddPartnerForm = ({ onPartnerAdded }) => {
   const [formData, setFormData] = useState({
     name: '',
     organization_name: '',
-    county: '',
-    status: '',
-    contact_date: ''
+    contacts: '',
+    target_population: '',
+    contact_date: '',
+    next_contact: '',
+    notes: ''
   });
   const [message, setMessage] = useState('');
 
@@ -17,34 +19,119 @@ const AddPartnerForm = ({ onPartnerAdded }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://127.0.0.1:5000/api/partner', {
+      const res = await fetch('http://localhost:5000/api/add_potential_partner', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(formData)
       });
+      
       const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to add partner');
+      }
+      
       setMessage(data.message);
       if (onPartnerAdded) {
         onPartnerAdded(data.partner);
       }
+      
+      // Clear form on success
+      setFormData({
+        name: '',
+        organization_name: '',
+        contacts: '',
+        target_population: '',
+        contact_date: '',
+        next_contact: '',
+        notes: ''
+      });
+      
     } catch (err) {
       console.error('Error adding partner:', err);
-      setMessage('Error adding partner.');
+      setMessage(err.message || 'Error adding partner');
     }
   };
 
   return (
-    <div>
-      <h2>Add Community Partner Data</h2>
+    <div className="add-partner-form">
+      <h2>Add New Community Partner</h2>
       <form onSubmit={handleSubmit}>
-        <input type="text" name="name" placeholder="Partner Name" onChange={handleChange} required />
-        <input type="text" name="organization_name" placeholder="Organization Name" onChange={handleChange} required />
-        <input type="text" name="county" placeholder="County" onChange={handleChange} required />
-        <input type="text" name="status" placeholder="Status" onChange={handleChange} required />
-        <input type="date" name="contact_date" onChange={handleChange} required />
+        <div>
+          <label>Name:</label>
+          <input 
+            type="text" 
+            name="name" 
+            value={formData.name}
+            onChange={handleChange} 
+            required 
+          />
+        </div>
+        
+        <div>
+          <label>Organization Name:</label>
+          <input 
+            type="text" 
+            name="organization_name" 
+            value={formData.organization_name}
+            onChange={handleChange} 
+            required 
+          />
+        </div>
+        
+        <div>
+          <label>Contacts:</label>
+          <textarea
+            name="contacts"
+            value={formData.contacts}
+            onChange={handleChange}
+          />
+        </div>
+        
+        <div>
+          <label>Target Population:</label>
+          <textarea
+            name="target_population"
+            value={formData.target_population}
+            onChange={handleChange}
+          />
+        </div>
+        
+        <div>
+          <label>Contact Date:</label>
+          <input
+            type="date"
+            name="contact_date"
+            value={formData.contact_date}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        
+        <div>
+          <label>Next Contact:</label>
+          <input
+            type="text"
+            name="next_contact"
+            value={formData.next_contact}
+            onChange={handleChange}
+          />
+        </div>
+        
+        <div>
+          <label>Notes:</label>
+          <textarea
+            name="notes"
+            value={formData.notes}
+            onChange={handleChange}
+          />
+        </div>
+
         <button type="submit">Add Partner</button>
       </form>
-      {message && <p>{message}</p>}
+      {message && <p className={message.includes('Error') ? 'error' : 'success'}>{message}</p>}
     </div>
   );
 };
