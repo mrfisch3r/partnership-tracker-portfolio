@@ -1105,3 +1105,65 @@ table {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Add these styles to your existing App.css file in the print media query section */
+
+@media print {
+  .sidebar {
+    display: none;
+  }
+  
+  .main-content {
+    width: 100%;
+  }
+  
+  .app-header, .nav-buttons {
+    display: none;
+  }
+  
+  .partnership-table {
+    width: 100%;
+    box-shadow: none;
+  }
+  
+  button {
+    display: none;
+  }
+  
+  /* Hide table instructions when printing */
+  .table-instructions {
+    display: none;
+  }
+  
+  /* Remove border styling and improve table readability */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  th {
+    background-color: #f2f2f2 !important;
+    color: black !important;
+  }
+  
+  /* Add a header with page title and date */
+  .partnership-table::before {
+    content: "Partnership Tracker - Printed on " attr(data-print-date);
+    display: block;
+    font-size: 14pt;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  /* Add page breaks between tables */
+  .partnership-table {
+    page-break-after: always;
+  }
+}

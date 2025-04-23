@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const PotentialPartnershipsTable = ({ filters, onPartnerSelect, refreshTrigger = 0 }) => {
   const [partners, setPartners] = useState([]);
   const [sortOrder, setSortOrder] = useState('desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const tableRef = useRef(null);
 
   // Fetch partners data when component mounts or refreshTrigger changes
   useEffect(() => {
@@ -27,11 +28,21 @@ const PotentialPartnershipsTable = ({ filters, onPartnerSelect, refreshTrigger =
     fetchPartners();
   }, [refreshTrigger]);
 
+  // Set current date for printing
+  useEffect(() => {
+    if (tableRef.current) {
+      const today = new Date();
+      const formattedDate = today.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      tableRef.current.setAttribute('data-print-date', formattedDate);
+    }
+  }, [partners]);
+
   // Filter based on sidebar controls
   const filtered = partners.filter((p) => {
-    // Will add more complex filtering as needed based on your requirements
-    // Currently just implementing simple text matching
-    
     // Filter by organization name (if set)
     const byOrganization = filters.organization 
       ? p.organization_name?.toLowerCase().includes(filters.organization.toLowerCase()) 
@@ -80,7 +91,7 @@ const PotentialPartnershipsTable = ({ filters, onPartnerSelect, refreshTrigger =
   if (error) return <div className="error-message">{error}</div>;
 
   return (
-    <div className="partnership-table">
+    <div className="partnership-table" ref={tableRef}>
       <h2>Potential Partnerships</h2>
       <div className="table-controls">
         <button onClick={toggleSort}>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import html2pdf from 'html2pdf.js';
 
 const Sidebar = ({ onFilterChange }) => {
   const [organization, setOrganization] = useState('');
@@ -43,9 +44,36 @@ const Sidebar = ({ onFilterChange }) => {
     window.print();
   };
 
-  // Handle export to PDF (placeholder)
+  // Handle export to PDF 
   const handleExportPDF = () => {
-    alert('Export to PDF functionality will be implemented in a future update.');
+    // Get the main table content
+    const contentElement = document.querySelector('.partnership-table');
+    
+    if (!contentElement) {
+      alert('No content found to export. Please ensure you are viewing a table.');
+      return;
+    }
+    
+    // Create a clone of the element to avoid modifying the original
+    const clonedContent = contentElement.cloneNode(true);
+    
+    // Remove any instruction text from the clone
+    const instructions = clonedContent.querySelector('.table-instructions');
+    if (instructions) {
+      instructions.remove();
+    }
+    
+    // Set PDF generation options
+    const options = {
+      margin: 10,
+      filename: 'partnership-data-export.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+    
+    // Generate PDF
+    html2pdf().from(clonedContent).set(options).save();
   };
 
   return (
@@ -109,7 +137,7 @@ const Sidebar = ({ onFilterChange }) => {
         <h3>Quick Help</h3>
         <p>Click on any row to view details.</p>
         <p>Use filters above to narrow down results.</p>
-        <p>Add new partnerships using the "Add New Partnership" button.</p>
+        <p>Add new partnerships using the "Add New" button.</p>
       </div>
     </aside>
   );
