@@ -14,6 +14,7 @@ const AddOutreachEventForm = ({ onEventAdded }) => {
 
   // State for displaying success/error messages
   const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Handle changes to any form field
   const handleChange = (e) => {
@@ -23,7 +24,15 @@ const AddOutreachEventForm = ({ onEventAdded }) => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form
+    if (!formData.name || !formData.organization_name) {
+      setMessage('Name and Organization are required fields');
+      return;
+    }
+    
     try {
+      setIsSubmitting(true);
       // Send POST request to backend
       const res = await fetch('http://localhost:5000/api/add_outreach_event', {
         method: 'POST',
@@ -41,7 +50,7 @@ const AddOutreachEventForm = ({ onEventAdded }) => {
       }
       
       // Display success message
-      setMessage(data.message);
+      setMessage(data.message || 'Outreach event added successfully');
       if (onEventAdded) {
         onEventAdded(data.event);
       }
@@ -60,12 +69,36 @@ const AddOutreachEventForm = ({ onEventAdded }) => {
     } catch (err) {
       console.error('Error adding outreach event:', err);
       setMessage(err.message || 'Error adding outreach event');
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  // Generic sample data to show as examples
+  const examples = {
+    name: "John Smith",
+    organization: "Community Health Center",
+    contacts: "Program Director\njsmith@example.com\n555-123-4567",
+    target_population: "Underserved populations, youth at risk",
+    event_dates: "Main Street Clinic: 06/15/23\nEastside Center: 07/21/23",
+    reoccuring_event: "Y - Quarterly testing events, additional events scheduled as needed"
   };
 
   return (
     <div className="add-partner-form">
       <h2>Add New Outreach Event</h2>
+      
+      <div className="form-instructions">
+        <h4>Data Format Guidelines</h4>
+        <p>Please format your data as follows:</p>
+        <ul>
+          <li><strong>Name:</strong> Person's name or event title</li>
+          <li><strong>Organization:</strong> Full organization name</li>
+          <li><strong>Contact Info:</strong> Include position, email, phone (separate with line breaks)</li>
+          <li><strong>Event Dates:</strong> Include location and date (e.g., "Location: MM/DD/YY")</li>
+        </ul>
+      </div>
+      
       <form onSubmit={handleSubmit}>
         {/* Event name input */}
         <div>
@@ -77,7 +110,7 @@ const AddOutreachEventForm = ({ onEventAdded }) => {
             value={formData.name}
             onChange={handleChange} 
             required 
-            placeholder="Event name"
+            placeholder={examples.name}
           />
         </div>
         
@@ -91,20 +124,22 @@ const AddOutreachEventForm = ({ onEventAdded }) => {
             value={formData.organization_name}
             onChange={handleChange} 
             required 
-            placeholder="Organization name"
+            placeholder={examples.organization}
           />
         </div>
         
         {/* Contact details textarea */}
         <div>
-          <label htmlFor="contacts">Contact Details:</label>
+          <label htmlFor="contacts">Contact Info:</label>
           <textarea
             id="contacts"
             name="contacts"
             value={formData.contacts}
             onChange={handleChange}
-            placeholder="Phone numbers, email addresses, etc."
+            placeholder={examples.contacts}
+            rows={4}
           />
+          <small className="field-hint">Include position, email, phone - one item per line</small>
         </div>
         
         {/* Target population textarea */}
@@ -115,34 +150,36 @@ const AddOutreachEventForm = ({ onEventAdded }) => {
             name="target_population"
             value={formData.target_population}
             onChange={handleChange}
-            placeholder="Who is this event intended to serve?"
+            placeholder={examples.target_population}
+            rows={3}
           />
+          <small className="field-hint">Describe who this event/outreach serves</small>
         </div>
         
         {/* Event dates input */}
         <div>
           <label htmlFor="event_dates">Event Date(s):</label>
-          <input
+          <textarea
             id="event_dates"
-            type="text"
             name="event_dates"
             value={formData.event_dates}
             onChange={handleChange}
-            required
-            placeholder="Date(s) of the event"
+            placeholder={examples.event_dates}
+            rows={3}
           />
+          <small className="field-hint">Include location: date format (one per line)</small>
         </div>
         
-        {/* Recurring event input */}
+        {/* Recurring event input with updated label */}
         <div>
-          <label htmlFor="reoccuring_event">Recurring Event:</label>
-          <input
+          <label htmlFor="reoccuring_event">Reoccuring Event? (Y/N) If so, List Frequency:</label>
+          <textarea
             id="reoccuring_event"
-            type="text"
             name="reoccuring_event"
             value={formData.reoccuring_event}
             onChange={handleChange}
-            placeholder="Is this a recurring event? If so, how often?"
+            placeholder={examples.reoccuring_event}
+            rows={3}
           />
         </div>
         
@@ -154,14 +191,22 @@ const AddOutreachEventForm = ({ onEventAdded }) => {
             name="notes"
             value={formData.notes}
             onChange={handleChange}
-            placeholder="Any additional notes about this event"
+            placeholder="Enter detailed notes about interactions, history, and follow-up plans."
+            rows={8}
           />
+          <small className="field-hint">These notes will be viewable in a separate window when viewing event details</small>
         </div>
 
-        <button type="submit">Add Event</button>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Adding...' : 'Add Event'}
+        </button>
       </form>
       {/* Display success/error message if present */}
-      {message && <p className={message.includes('Error') ? 'error' : 'success'}>{message}</p>}
+      {message && (
+        <p className={message.includes('Error') || message.includes('Failed') ? 'error' : 'success'}>
+          {message}
+        </p>
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import PartnershipTable from './components/PartnershipTable';
@@ -53,6 +53,14 @@ function App() {
     setSelectedItem(null);
   };
 
+  // handle updates to events or partners
+  const handleItemUpdated = (updatedItem) => {
+    // Update the selected item with the updated data
+    if (selectedItem && selectedItem.id === updatedItem.id) {
+      setSelectedItem(updatedItem);
+    }
+  };
+
   // render either the table view or add form based on activeAction
   const renderMainContent = () => {
     if (activeAction === "add") {
@@ -84,11 +92,13 @@ function App() {
         partner={selectedItem} 
         onClose={handleCloseDetails} 
         onComments={handleOpenComments}
+        onPartnerUpdated={handleItemUpdated}
       />
     ) : (
       <OutreachEventDetails
         event={selectedItem}
         onClose={handleCloseDetails}
+        onEventUpdated={handleItemUpdated}
       />
     );
   };
