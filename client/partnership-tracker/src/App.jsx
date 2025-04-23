@@ -4,13 +4,16 @@ import Sidebar from './components/Sidebar';
 import PotentialPartnershipsTable from './components/PartnershipTable';
 import OutreachEventsTable from './components/OutreachEventsTable';
 import SeasonalEventsTable from './components/SeasonalEventsTable';
+import NotPartnershipsTable from './components/NotPartnershipsTable';
 import PartnershipDetails from './components/PartnerDetailsSection';
 import OutreachEventDetails from './components/OutreachEventDetails';
 import SeasonalEventDetails from './components/SeasonalEventDetails';
+import NotPartnershipDetails from './components/NotPartnershipDetails';
 import CommentsSection from './components/CommentsSection';
 import AddPartnershipForm from './components/AddPartnerForm';
 import AddOutreachEventForm from './components/AddOutreachEventForm';
 import AddSeasonalEventForm from './components/AddSeasonalEventForm';
+import AddNotPartnershipForm from './components/AddNotPartnershipForm';
 import './App.css';
 
 function App() {
@@ -23,7 +26,7 @@ function App() {
   // toggle to show comments vs. details
   const [showComments, setShowComments] = useState(false);
   
-  // state for active view: "partnerships", "outreach", or "seasonal"
+  // state for active view: "partnerships", "outreach", "seasonal", or "notPartnerships"
   const [activeView, setActiveView] = useState("partnerships");
   
   // state for active action: "view" or "add"
@@ -73,6 +76,8 @@ function App() {
         return "Outreach Event";
       case "seasonal":
         return "Seasonal Event";
+      case "notPartnerships":
+        return "Not Potential Partner";
       default:
         return "Item";
     }
@@ -87,6 +92,8 @@ function App() {
         return <AddOutreachEventForm onEventAdded={() => setActiveAction("view")} />;
       } else if (activeView === "seasonal") {
         return <AddSeasonalEventForm onEventAdded={() => setActiveAction("view")} />;
+      } else if (activeView === "notPartnerships") {
+        return <AddNotPartnershipForm onPartnerAdded={() => setActiveAction("view")} />;
       }
     }
     
@@ -96,6 +103,8 @@ function App() {
       return <OutreachEventsTable filters={filters} onEventSelect={handleItemSelect} />;
     } else if (activeView === "seasonal") {
       return <SeasonalEventsTable filters={filters} onEventSelect={handleItemSelect} />;
+    } else if (activeView === "notPartnerships") {
+      return <NotPartnershipsTable filters={filters} onPartnerSelect={handleItemSelect} />;
     }
   };
 
@@ -137,6 +146,14 @@ function App() {
           onEventUpdated={handleItemUpdated}
         />
       );
+    } else if (activeView === "notPartnerships") {
+      return (
+        <NotPartnershipDetails
+          partner={selectedItem}
+          onClose={handleCloseDetails}
+          onPartnerUpdated={handleItemUpdated}
+        />
+      );
     }
   };
 
@@ -174,6 +191,16 @@ function App() {
           className={activeView === "seasonal" ? "active" : ""}
         >
           Seasonal Events
+        </button>
+        <button 
+          onClick={() => {
+            setActiveView("notPartnerships");
+            setActiveAction("view");
+            setSelectedItem(null);
+          }}
+          className={activeView === "notPartnerships" ? "active" : ""}
+        >
+          Not Potential Partnerships
         </button>
         <button 
           onClick={() => {
