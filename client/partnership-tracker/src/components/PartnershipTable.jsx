@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
-const PotentialPartnershipsTable = ({ filters, onPartnerSelect }) => {
+const PotentialPartnershipsTable = ({ filters, onPartnerSelect, refreshTrigger = 0 }) => {
   const [partners, setPartners] = useState([]);
   const [sortOrder, setSortOrder] = useState('desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch partners data when component mounts
+  // Fetch partners data when component mounts or refreshTrigger changes
   useEffect(() => {
     async function fetchPartners() {
       try {
@@ -25,7 +25,7 @@ const PotentialPartnershipsTable = ({ filters, onPartnerSelect }) => {
       }
     }
     fetchPartners();
-  }, []);
+  }, [refreshTrigger]);
 
   // Filter based on sidebar controls
   const filtered = partners.filter((p) => {

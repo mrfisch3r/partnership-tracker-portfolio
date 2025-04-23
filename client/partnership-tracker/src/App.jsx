@@ -5,18 +5,18 @@ import PotentialPartnershipsTable from './components/PartnershipTable';
 import OutreachEventsTable from './components/OutreachEventsTable';
 import SeasonalEventsTable from './components/SeasonalEventsTable';
 import NotPartnershipsTable from './components/NotPartnershipsTable';
-import MonthlyUpdatesTable from './components/MonthlyUpdatesTable'; // New import
+import MonthlyUpdatesTable from './components/MonthlyUpdatesTable';
 import PartnershipDetails from './components/PartnerDetailsSection';
 import OutreachEventDetails from './components/OutreachEventDetails';
 import SeasonalEventDetails from './components/SeasonalEventDetails';
 import NotPartnershipDetails from './components/NotPartnershipDetails';
-import MonthlyUpdateDetails from './components/MonthlyUpdateDetails'; // New import
+import MonthlyUpdateDetails from './components/MonthlyUpdateDetails';
 import CommentsSection from './components/CommentsSection';
 import AddPartnershipForm from './components/AddPartnerForm';
 import AddOutreachEventForm from './components/AddOutreachEventForm';
 import AddSeasonalEventForm from './components/AddSeasonalEventForm';
 import AddNotPartnershipForm from './components/AddNotPartnershipForm';
-import AddMonthlyUpdateForm from './components/AddMonthlyUpdateForm'; // New import
+import AddMonthlyUpdateForm from './components/AddMonthlyUpdateForm';
 import './App.css';
 
 function App() {
@@ -34,6 +34,9 @@ function App() {
   
   // state for active action: "view" or "add"
   const [activeAction, setActiveAction] = useState("view");
+  
+  // state to force table refreshes after item deletion
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // called when filter values change in Sidebar
   const handleFilterChange = (newFilters) => {
@@ -68,6 +71,25 @@ function App() {
     if (selectedItem && selectedItem.id === updatedItem.id) {
       setSelectedItem(updatedItem);
     }
+    
+    // Force a refresh of the table data
+    triggerTableRefresh();
+  };
+  
+  // handle item deletion
+  const handleItemDeleted = (itemId) => {
+    // Clear the selected item if it was deleted
+    if (selectedItem && selectedItem.id === itemId) {
+      setSelectedItem(null);
+    }
+    
+    // Force a refresh of the table data
+    triggerTableRefresh();
+  };
+  
+  // force tables to refresh their data
+  const triggerTableRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
   };
 
   // Get the appropriate label based on the active view
@@ -105,15 +127,35 @@ function App() {
     }
     
     if (activeView === "partnerships") {
-      return <PotentialPartnershipsTable filters={filters} onPartnerSelect={handleItemSelect} />;
+      return <PotentialPartnershipsTable 
+               filters={filters} 
+               onPartnerSelect={handleItemSelect} 
+               refreshTrigger={refreshTrigger} 
+             />;
     } else if (activeView === "outreach") {
-      return <OutreachEventsTable filters={filters} onEventSelect={handleItemSelect} />;
+      return <OutreachEventsTable 
+               filters={filters} 
+               onEventSelect={handleItemSelect} 
+               refreshTrigger={refreshTrigger} 
+             />;
     } else if (activeView === "seasonal") {
-      return <SeasonalEventsTable filters={filters} onEventSelect={handleItemSelect} />;
+      return <SeasonalEventsTable 
+               filters={filters} 
+               onEventSelect={handleItemSelect} 
+               refreshTrigger={refreshTrigger} 
+             />;
     } else if (activeView === "notPartnerships") {
-      return <NotPartnershipsTable filters={filters} onPartnerSelect={handleItemSelect} />;
+      return <NotPartnershipsTable 
+               filters={filters} 
+               onPartnerSelect={handleItemSelect} 
+               refreshTrigger={refreshTrigger} 
+             />;
     } else if (activeView === "monthlyUpdates") {
-      return <MonthlyUpdatesTable filters={filters} onUpdateSelect={handleItemSelect} />;
+      return <MonthlyUpdatesTable 
+               filters={filters} 
+               onUpdateSelect={handleItemSelect} 
+               refreshTrigger={refreshTrigger} 
+             />;
     }
   };
 
@@ -137,6 +179,7 @@ function App() {
           onClose={handleCloseDetails} 
           onComments={handleOpenComments}
           onPartnerUpdated={handleItemUpdated}
+          onPartnerDeleted={handleItemDeleted}
         />
       );
     } else if (activeView === "outreach") {
@@ -145,6 +188,7 @@ function App() {
           event={selectedItem}
           onClose={handleCloseDetails}
           onEventUpdated={handleItemUpdated}
+          onEventDeleted={handleItemDeleted}
         />
       );
     } else if (activeView === "seasonal") {
@@ -153,6 +197,7 @@ function App() {
           event={selectedItem}
           onClose={handleCloseDetails}
           onEventUpdated={handleItemUpdated}
+          onEventDeleted={handleItemDeleted}
         />
       );
     } else if (activeView === "notPartnerships") {
@@ -161,6 +206,7 @@ function App() {
           partner={selectedItem}
           onClose={handleCloseDetails}
           onPartnerUpdated={handleItemUpdated}
+          onPartnerDeleted={handleItemDeleted}
         />
       );
     } else if (activeView === "monthlyUpdates") {
@@ -169,6 +215,7 @@ function App() {
           update={selectedItem}
           onClose={handleCloseDetails}
           onUpdateUpdated={handleItemUpdated}
+          onUpdateDeleted={handleItemDeleted}
         />
       );
     }

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
-const SeasonalEventsTable = ({ filters, onEventSelect }) => {
+const SeasonalEventsTable = ({ filters, onEventSelect, refreshTrigger = 0 }) => {
   // State for storing events data and sort order
   const [events, setEvents] = useState([]);
   const [sortOrder, setSortOrder] = useState('desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch events data when component mounts
+  // Fetch events data when component mounts or refreshTrigger changes
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -27,13 +27,16 @@ const SeasonalEventsTable = ({ filters, onEventSelect }) => {
     };
 
     fetchEvents();
-  }, []);
+  }, [refreshTrigger]); // Re-fetch when refreshTrigger changes
 
   // Filter events based on sidebar filters
   const filtered = events.filter((event) => {
-    // Implementation placeholder for filtering by organization, county, etc.
-    // when those filters are implemented in the sidebar
-    return true;
+    // Filter by organization name (if set)
+    const byOrganization = filters.organization 
+      ? event.organization_name?.toLowerCase().includes(filters.organization.toLowerCase()) 
+      : true;
+    
+    return byOrganization;
   });
 
   // Extract the most recent date from a compound date string
@@ -93,9 +96,11 @@ const SeasonalEventsTable = ({ filters, onEventSelect }) => {
   return (
     <div className="partnership-table">
       <h2>Seasonal Events</h2>
-      <button onClick={toggleSort}>
-        Sort by Date ({sortOrder === 'desc' ? 'Newest First' : 'Oldest First'})
-      </button>
+      <div className="table-controls">
+        <button onClick={toggleSort}>
+          Sort by Date ({sortOrder === 'desc' ? 'Newest First' : 'Oldest First'})
+        </button>
+      </div>
       
       <div className="table-instructions">
         <p>Click on any row to view full details including notes.</p>

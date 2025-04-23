@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import NotesModal from './NotesModal';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
 
-const SeasonalEventDetails = ({ event, onClose, onEventUpdated }) => {
+const SeasonalEventDetails = ({ event, onClose, onEventUpdated, onEventDeleted }) => {
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState({ ...event });
   const [isSaving, setIsSaving] = useState(false);
@@ -74,6 +76,22 @@ const SeasonalEventDetails = ({ event, onClose, onEventUpdated }) => {
       };
       onEventUpdated(updatedEvent);
     }
+  };
+
+  // Handle successful deletion
+  const handleDeleteSuccess = () => {
+    // Call the parent component's onEventDeleted function if it exists
+    if (onEventDeleted && typeof onEventDeleted === 'function') {
+      onEventDeleted(event.id);
+    }
+    
+    // Close the details modal
+    onClose();
+  };
+
+  // Open delete confirmation modal
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
   };
 
   return (
@@ -149,7 +167,7 @@ const SeasonalEventDetails = ({ event, onClose, onEventUpdated }) => {
             />
           </div>
           
-          {/* Save and Cancel buttons */}
+          {/* Save and Cancel buttons with Delete button */}
           <div className="actions">
             <button 
               onClick={handleSaveChanges} 
@@ -166,6 +184,12 @@ const SeasonalEventDetails = ({ event, onClose, onEventUpdated }) => {
               className="cancel-button"
             >
               Cancel
+            </button>
+            <button
+              onClick={handleDeleteClick}
+              className="delete-button"
+            >
+              Delete Event
             </button>
           </div>
           
@@ -223,7 +247,7 @@ const SeasonalEventDetails = ({ event, onClose, onEventUpdated }) => {
         </>
       )}
 
-      {/* Action buttons */}
+      {/* Action buttons - only Edit and Close in view mode */}
       <div className="actions">
         {!isEditing && (
           <button 
@@ -244,6 +268,16 @@ const SeasonalEventDetails = ({ event, onClose, onEventUpdated }) => {
         initialNotes={event.notes}
         eventName={event.name}
         onSaveSuccess={handleNotesUpdated}
+      />
+      
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        table="seasonalevents"
+        id={event.id}
+        itemName={event.name || "this event"}
+        onDeleteSuccess={handleDeleteSuccess}
       />
     </div>
   );

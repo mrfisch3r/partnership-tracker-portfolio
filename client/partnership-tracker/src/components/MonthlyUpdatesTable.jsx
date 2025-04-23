@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
-const MonthlyUpdatesTable = ({ filters, onUpdateSelect }) => {
+const MonthlyUpdatesTable = ({ filters, onUpdateSelect, refreshTrigger = 0 }) => {
   const [updates, setUpdates] = useState([]);
   const [sortOrder, setSortOrder] = useState('desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch monthly updates data when component mounts
+  // Fetch monthly updates data when component mounts or refreshTrigger changes
   useEffect(() => {
     const fetchUpdates = async () => {
       try {
@@ -26,7 +26,7 @@ const MonthlyUpdatesTable = ({ filters, onUpdateSelect }) => {
     };
 
     fetchUpdates();
-  }, []);
+  }, [refreshTrigger]);
 
   // Filter updates based on sidebar filters (e.g., date range)
   const filtered = updates.filter((update) => {

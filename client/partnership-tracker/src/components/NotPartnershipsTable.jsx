@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
-const NotPartnershipsTable = ({ filters, onPartnerSelect }) => {
+const NotPartnershipsTable = ({ filters, onPartnerSelect, refreshTrigger = 0 }) => {
   const [partners, setPartners] = useState([]);
   const [sortOrder, setSortOrder] = useState('desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch partners data when component mounts
+  // Fetch partners data when component mounts or refreshTrigger changes
   useEffect(() => {
     async function fetchPartners() {
       try {
@@ -25,13 +25,10 @@ const NotPartnershipsTable = ({ filters, onPartnerSelect }) => {
       }
     }
     fetchPartners();
-  }, []);
+  }, [refreshTrigger]);
 
   // Filter based on sidebar controls
   const filtered = partners.filter((p) => {
-    // Will add more complex filtering as needed based on your requirements
-    // Currently just implementing simple text matching
-    
     // Filter by organization name (if set)
     const byOrganization = filters.organization 
       ? p.organization_name?.toLowerCase().includes(filters.organization.toLowerCase()) 

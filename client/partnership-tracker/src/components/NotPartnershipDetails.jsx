@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import NotesModal from './NotesModal';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
 
-const NotPartnershipDetails = ({ partner, onClose, onPartnerUpdated }) => {
+const NotPartnershipDetails = ({ partner, onClose, onPartnerUpdated, onPartnerDeleted }) => {
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState({ ...partner });
   const [isSaving, setIsSaving] = useState(false);
@@ -74,6 +76,22 @@ const NotPartnershipDetails = ({ partner, onClose, onPartnerUpdated }) => {
       };
       onPartnerUpdated(updatedPartner);
     }
+  };
+
+  // Handle successful deletion
+  const handleDeleteSuccess = () => {
+    // Call the parent component's onPartnerDeleted function if it exists
+    if (onPartnerDeleted && typeof onPartnerDeleted === 'function') {
+      onPartnerDeleted(partner.id);
+    }
+    
+    // Close the details modal
+    onClose();
+  };
+
+  // Open delete confirmation modal
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
   };
 
   return (
@@ -149,7 +167,7 @@ const NotPartnershipDetails = ({ partner, onClose, onPartnerUpdated }) => {
             />
           </div>
           
-          {/* Save and Cancel buttons */}
+          {/* Save and Cancel buttons with Delete button */}
           <div className="actions">
             <button 
               onClick={handleSaveChanges} 
@@ -166,6 +184,12 @@ const NotPartnershipDetails = ({ partner, onClose, onPartnerUpdated }) => {
               className="cancel-button"
             >
               Cancel
+            </button>
+            <button
+              onClick={handleDeleteClick}
+              className="delete-button"
+            >
+              Delete Not Potential Partner
             </button>
           </div>
           
@@ -223,7 +247,7 @@ const NotPartnershipDetails = ({ partner, onClose, onPartnerUpdated }) => {
         </>
       )}
 
-      {/* Action buttons */}
+      {/* Action buttons - only Edit and Close in view mode */}
       <div className="actions">
         {!isEditing && (
           <button 
@@ -244,6 +268,16 @@ const NotPartnershipDetails = ({ partner, onClose, onPartnerUpdated }) => {
         initialNotes={partner.notes}
         eventName={partner.name}
         onSaveSuccess={handleNotesUpdated}
+      />
+      
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        table="notpotentialpartnerships"
+        id={partner.id}
+        itemName={partner.name || "this not potential partner"}
+        onDeleteSuccess={handleDeleteSuccess}
       />
     </div>
   );

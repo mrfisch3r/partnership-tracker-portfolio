@@ -183,6 +183,7 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
+  position: relative;
 }
 
 th, td {
@@ -876,4 +877,231 @@ td {
 .partnership-table table td:last-child {
   width: 80px;
   text-align: center;
+}
+
+/* DELETE BUTTON STYLES */
+.delete-button-container {
+  display: inline-block;
+  position: relative;
+}
+
+.delete-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.delete-button:hover {
+  background-color: #c82333;
+}
+
+.delete-button:disabled {
+  background-color: #e4717a;
+  cursor: not-allowed;
+}
+
+.delete-confirmation {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 10px;
+  margin-top: 5px;
+  width: 250px;
+  position: absolute;
+  z-index: 10;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.delete-confirmation p {
+  color: #721c24;
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-align: center;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.confirmation-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.confirmation-buttons button {
+  flex: 1;
+  padding: 6px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.confirm-delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+.confirm-delete:hover {
+  background-color: #c82333;
+}
+
+.confirm-delete:disabled {
+  background-color: #e4717a;
+  cursor: not-allowed;
+}
+
+.cancel-delete {
+  background-color: #6c757d;
+  color: white;
+}
+
+.cancel-delete:hover {
+  background-color: #5a6268;
+}
+
+.delete-error {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+/* For modal integration */
+.partner-details .delete-button-container,
+.event-details .delete-button-container {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+/* In table views - adjust position for the confirmation popup */
+.partnership-table .delete-button-container .delete-confirmation {
+  right: 0;
+  top: 100%;
+}
+
+/* Smaller delete button for table rows */
+.small-delete-button {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+}
+
+/* Table cell with delete button - prevent clicks from reaching the row */
+td .delete-button-container {
+  position: relative;
+  z-index: 5;
+}
+
+/* Adjust confirmation position in tables */
+td .delete-confirmation {
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 10;
+  width: 180px;
+}
+
+/* Make sure the delete confirmation popup doesn't get cut off */
+table {
+  position: relative;
+}
+
+/* Add these styles to your existing App.css file */
+
+/* DELETE CONFIRMATION MODAL STYLES */
+.delete-confirmation-modal {
+  position: relative;
+  width: 90%;
+  max-width: 450px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  padding: 1.5rem;
+  z-index: 2001;
+  animation: fadeIn 0.2s ease;
+}
+
+.delete-confirmation-modal h3 {
+  margin-top: 0;
+  color: #dc3545;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.confirmation-content {
+  margin-bottom: 1.5rem;
+}
+
+.confirmation-content p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.delete-warning {
+  color: #dc3545;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.delete-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 0.75rem;
+  margin-top: 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.delete-confirm-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-confirm-button:hover {
+  background-color: #c82333;
+}
+
+.delete-confirm-button:disabled {
+  background-color: #e4717a;
+  cursor: not-allowed;
+}
+
+.delete-cancel-button {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-cancel-button:hover {
+  background-color: #5a6268;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }

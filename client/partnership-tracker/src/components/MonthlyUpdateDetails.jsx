@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import NotesModal from './NotesModal';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
 
-const MonthlyUpdateDetails = ({ update, onClose, onUpdateUpdated }) => {
+const MonthlyUpdateDetails = ({ update, onClose, onUpdateUpdated, onUpdateDeleted }) => {
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editFormData, setEditFormData] = useState({ ...update });
   const [isSaving, setIsSaving] = useState(false);
@@ -63,6 +65,22 @@ const MonthlyUpdateDetails = ({ update, onClose, onUpdateUpdated }) => {
     }
   };
 
+  // Handle successful deletion
+  const handleDeleteSuccess = () => {
+    // Call the parent component's onUpdateDeleted function if it exists
+    if (onUpdateDeleted && typeof onUpdateDeleted === 'function') {
+      onUpdateDeleted(update.id);
+    }
+    
+    // Close the details modal
+    onClose();
+  };
+
+  // Open delete confirmation modal
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
   const formatText = (text) => {
     if (!text) return 'None provided';
     
@@ -76,7 +94,7 @@ const MonthlyUpdateDetails = ({ update, onClose, onUpdateUpdated }) => {
   };
 
   return (
-    <div className="partner-details">
+    <div className="partner-details monthly-update-details">
       {/* Close button in top right corner */}
       <button className="close-button" onClick={onClose}>X</button>
       <h3>Monthly Update Details</h3>
@@ -133,7 +151,7 @@ const MonthlyUpdateDetails = ({ update, onClose, onUpdateUpdated }) => {
             />
           </div>
           
-          {/* Save and Cancel buttons */}
+          {/* Save and Cancel buttons with Delete button */}
           <div className="actions">
             <button 
               onClick={handleSaveChanges} 
@@ -150,6 +168,12 @@ const MonthlyUpdateDetails = ({ update, onClose, onUpdateUpdated }) => {
               className="cancel-button"
             >
               Cancel
+            </button>
+            <button
+              onClick={handleDeleteClick}
+              className="delete-button"
+            >
+              Delete Monthly Update
             </button>
           </div>
           
@@ -200,7 +224,7 @@ const MonthlyUpdateDetails = ({ update, onClose, onUpdateUpdated }) => {
         </>
       )}
 
-      {/* Action buttons */}
+      {/* Action buttons - only Edit and Close in view mode */}
       <div className="actions">
         {!isEditing && (
           <button 
@@ -221,6 +245,16 @@ const MonthlyUpdateDetails = ({ update, onClose, onUpdateUpdated }) => {
         initialNotes={update.notes}
         eventName={update.month_year}
         onSaveSuccess={handleNotesUpdated}
+      />
+      
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        table="monthlyupdates"
+        id={update.id}
+        itemName={`Update for ${update.month_year || "this month"}`}
+        onDeleteSuccess={handleDeleteSuccess}
       />
     </div>
   );
