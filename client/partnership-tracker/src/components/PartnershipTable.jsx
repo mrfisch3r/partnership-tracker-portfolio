@@ -1,22 +1,27 @@
 import React, { useState, useEffect } from 'react';
 
-const PartnershipTable = ({ filters, onPartnerSelect }) => {
+const PotentialPartnershipsTable = ({ filters, onPartnerSelect }) => {
   const [partners, setPartners] = useState([]);
   const [sortOrder, setSortOrder] = useState('desc');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // → Fetch real data from Flask on mount
+  // Fetch partners data when component mounts
   useEffect(() => {
     async function fetchPartners() {
       try {
+        setLoading(true);
         const res = await fetch('http://localhost:5000/api/get_partners');
         if (!res.ok) {
-          console.error('Failed to load partners:', res.statusText);
-          return;
+          throw new Error('Failed to load potential partnerships');
         }
         const data = await res.json();
         setPartners(data);
+        setLoading(false);
       } catch (err) {
-        console.error('Error fetching partners:', err);
+        console.error('Error fetching potential partnerships:', err);
+        setError('Failed to load partnerships. Please try again later.');
+        setLoading(false);
       }
     }
     fetchPartners();
@@ -24,54 +29,112 @@ const PartnershipTable = ({ filters, onPartnerSelect }) => {
 
   // Filter based on sidebar controls
   const filtered = partners.filter((p) => {
-    const byCounty = filters.county ? p.county === filters.county : true;
-    const byStatus = filters.partnerType ? p.status === filters.partnerType : true;
-    return byCounty && byStatus;
+    // Will add more complex filtering as needed based on your requirements
+    // Currently just implementing simple text matching
+    
+    // Filter by organization name (if set)
+    const byOrganization = filters.organization 
+      ? p.organization_name?.toLowerCase().includes(filters.organization.toLowerCase()) 
+      : true;
+    
+    return byOrganization;
   });
 
-  // Sort by lastUpdated / contact_date
+  // Extract the most recent contact date from the contact_date field
+  const getRecentContactDate = (dateString) => {
+    if (!dateString) return '';
+    
+    // Look for date patterns like MM/DD/YYYY or M/D/YY
+    const datePattern = /(\d{1,2}\/\d{1,2}\/\d{2,4})/g;
+    const matches = dateString.match(datePattern);
+    
+    if (!matches || matches.length === 0) return dateString;
+    
+    // Return the most recent date (which should be the last one)
+    return matches[matches.length - 1];
+  };
+
+  // Sort by contact_date
   const sorted = [...filtered].sort((a, b) => {
-    const dateA = new Date(a.contact_date);
-    const dateB = new Date(b.contact_date);
-    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    // Get the most recent date for each entry
+    const dateA = getRecentContactDate(a.contact_date);
+    const dateB = getRecentContactDate(b.contact_date);
+    
+    // Convert to Date objects for comparison
+    const timeA = dateA ? new Date(dateA) : new Date(0);
+    const timeB = dateB ? new Date(dateB) : new Date(0);
+    
+    // Sort in descending (newest first) or ascending (oldest first) order
+    return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
   });
 
   const toggleSort = () => setSortOrder((o) => (o === 'desc' ? 'asc' : 'desc'));
 
+  // Truncate text for table display
+  const truncateText = (text, maxLength = 40) => {
+    if (!text) return 'N/A';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  };
+
+  if (loading) return <div>Loading potential partnerships...</div>;
+  if (error) return <div className="error-message">{error}</div>;
+
   return (
     <div className="partnership-table">
-      <h2>Community Partners</h2>
-      <button onClick={toggleSort}>
-        Sort by Recency ({sortOrder === 'desc' ? 'Newest First' : 'Oldest First'})
-      </button>
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Organization</th>     {/* ← NEW */}
-            <th>County</th>
-            <th>Status</th>
-            <th>Last Updated</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((partner) => (
-            <tr
-              key={partner.id}
-              onClick={() => onPartnerSelect(partner)}
-              style={{ cursor: 'pointer' }}
-            >
-              <td>{partner.name}</td>
-              <td>{partner.organization_name}</td>  {/* ← NEW */}
-              <td>{partner.county}</td>
-              <td>{partner.status}</td>
-              <td>{partner.contact_date}</td>
+      <h2>Potential Partnerships</h2>
+      <div className="table-controls">
+        <button onClick={toggleSort}>
+          Sort by Contact Date ({sortOrder === 'desc' ? 'Newest First' : 'Oldest First'})
+        </button>
+      </div>
+      
+      <div className="table-instructions">
+        <p>Click on any row to view full details including contact history and notes.</p>
+      </div>
+      
+      {sorted.length === 0 ? (
+        <p>No potential partnerships found. Add your first partnership using the "Add New Partner" button.</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Organization</th>
+              <th>Target Population</th>
+              <th>Most Recent Contact</th>
+              <th>Next Contact Plan</th>
+              <th>Has Notes</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sorted.map((partner) => {
+              // Get the most recent contact date for display
+              const recentDate = getRecentContactDate(partner.contact_date);
+              
+              return (
+                <tr
+                  key={partner.id}
+                  onClick={() => onPartnerSelect(partner)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <td>{partner.name || 'N/A'}</td>
+                  <td>{partner.organization_name || 'N/A'}</td>
+                  <td>{truncateText(partner.target_population)}</td>
+                  <td>{recentDate || 'N/A'}</td>
+                  <td>{truncateText(partner.next_contact, 30)}</td>
+                  <td>
+                    {partner.notes && partner.notes.trim() ? (
+                      <span className="notes-indicator">Yes</span>
+                    ) : 'No'}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 };
 
-export default PartnershipTable;
+export default PotentialPartnershipsTable;

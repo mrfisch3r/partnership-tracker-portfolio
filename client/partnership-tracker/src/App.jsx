@@ -1,30 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import PartnershipTable from './components/PartnershipTable';
+import PotentialPartnershipsTable from './components/PartnershipTable';
 import OutreachEventsTable from './components/OutreachEventsTable';
 import SeasonalEventsTable from './components/SeasonalEventsTable';
-import PartnerDetailsSection from './components/PartnerDetailsSection';
+import PartnershipDetails from './components/PartnerDetailsSection';
 import OutreachEventDetails from './components/OutreachEventDetails';
 import SeasonalEventDetails from './components/SeasonalEventDetails';
 import CommentsSection from './components/CommentsSection';
-import AddPartnerForm from './components/AddPartnerForm';
+import AddPartnershipForm from './components/AddPartnerForm';
 import AddOutreachEventForm from './components/AddOutreachEventForm';
 import AddSeasonalEventForm from './components/AddSeasonalEventForm';
 import './App.css';
 
 function App() {
-  // state for filter criteria – may fetch data from Flask based on these
-  const [filters, setFilters] = useState({ county: '', partnerType: '' });
+  // state for filter criteria
+  const [filters, setFilters] = useState({ organization: '', county: '' });
   
-  // state for selected partner/event from the table
+  // state for selected item from the table
   const [selectedItem, setSelectedItem] = useState(null);
   
   // toggle to show comments vs. details
   const [showComments, setShowComments] = useState(false);
   
-  // state for active view: "partners", "outreach", or "seasonal"
-  const [activeView, setActiveView] = useState("partners");
+  // state for active view: "partnerships", "outreach", or "seasonal"
+  const [activeView, setActiveView] = useState("partnerships");
   
   // state for active action: "view" or "add"
   const [activeAction, setActiveAction] = useState("view");
@@ -34,7 +34,7 @@ function App() {
     setFilters(newFilters);
   };
 
-  // called when a row is clicked in either table
+  // called when a row is clicked in any table
   const handleItemSelect = (item) => {
     setSelectedItem(item);
     setShowComments(false);
@@ -56,7 +56,7 @@ function App() {
     setSelectedItem(null);
   };
 
-  // handle updates to events or partners
+  // handle updates to items
   const handleItemUpdated = (updatedItem) => {
     // Update the selected item with the updated data
     if (selectedItem && selectedItem.id === updatedItem.id) {
@@ -67,8 +67,8 @@ function App() {
   // Get the appropriate label based on the active view
   const getActiveViewLabel = () => {
     switch (activeView) {
-      case "partners":
-        return "Partner";
+      case "partnerships":
+        return "Partnership";
       case "outreach":
         return "Outreach Event";
       case "seasonal":
@@ -81,8 +81,8 @@ function App() {
   // render either the table view or add form based on activeAction
   const renderMainContent = () => {
     if (activeAction === "add") {
-      if (activeView === "partners") {
-        return <AddPartnerForm onPartnerAdded={() => setActiveAction("view")} />;
+      if (activeView === "partnerships") {
+        return <AddPartnershipForm onPartnerAdded={() => setActiveAction("view")} />;
       } else if (activeView === "outreach") {
         return <AddOutreachEventForm onEventAdded={() => setActiveAction("view")} />;
       } else if (activeView === "seasonal") {
@@ -90,8 +90,8 @@ function App() {
       }
     }
     
-    if (activeView === "partners") {
-      return <PartnershipTable filters={filters} onPartnerSelect={handleItemSelect} />;
+    if (activeView === "partnerships") {
+      return <PotentialPartnershipsTable filters={filters} onPartnerSelect={handleItemSelect} />;
     } else if (activeView === "outreach") {
       return <OutreachEventsTable filters={filters} onEventSelect={handleItemSelect} />;
     } else if (activeView === "seasonal") {
@@ -112,9 +112,9 @@ function App() {
       );
     }
 
-    if (activeView === "partners") {
+    if (activeView === "partnerships") {
       return (
-        <PartnerDetailsSection 
+        <PartnershipDetails 
           partner={selectedItem} 
           onClose={handleCloseDetails} 
           onComments={handleOpenComments}
@@ -147,13 +147,13 @@ function App() {
       <div className="nav-buttons">
         <button 
           onClick={() => {
-            setActiveView("partners");
+            setActiveView("partnerships");
             setActiveAction("view");
             setSelectedItem(null);
           }}
-          className={activeView === "partners" ? "active" : ""}
+          className={activeView === "partnerships" ? "active" : ""}
         >
-          Partners
+          Potential Partnerships
         </button>
         <button 
           onClick={() => {

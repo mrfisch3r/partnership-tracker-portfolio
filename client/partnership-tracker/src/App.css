@@ -76,12 +76,98 @@ body {
   margin: 0; /* No margin */
 }
 
-/* Sidebar */
+/* Sidebar Styles */
 .sidebar {
-  width: 200px;
-  padding: 1rem;
-  background-color: #f0f0f0;
+  width: 250px;
+  padding: 1.5rem;
+  background-color: #f5f5f5;
+  border-right: 1px solid #e0e0e0;
   margin-right: 1rem;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar h2 {
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 0.5rem;
+}
+
+.filter-section {
+  margin-bottom: 1.2rem;
+}
+
+.filter-section label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.filter-section input,
+.filter-section select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: white;
+}
+
+.filter-section input:focus,
+.filter-section select:focus {
+  outline: none;
+  border-color: #2196F3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.sidebar-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.sidebar-button {
+  padding: 0.7rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.sidebar-button:hover {
+  background-color: #f0f0f0;
+  border-color: #aaa;
+}
+
+.sidebar-help {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  border-top: 1px solid #ddd;
+  margin-top: 2rem;
+}
+
+.sidebar-help h3 {
+  font-size: 1rem;
+  margin-top: 0;
+  margin-bottom: 0.8rem;
+  color: #444;
+}
+
+.sidebar-help p {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0.5rem 0;
 }
 
 /* Table Styles */
@@ -103,6 +189,71 @@ th, td {
   padding: 0.5rem;
   border: 1px solid #ccc;
   text-align: left;
+}
+
+/* Contact History Styles */
+.view-history-button {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-left: 10px;
+}
+
+.view-history-button:hover {
+  background-color: #0b7dda;
+}
+
+.contact-history-container {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.contact-history-container h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.contact-history-list {
+  list-style-type: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.contact-history-list li {
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.contact-history-list li:last-child {
+  border-bottom: none;
+}
+
+.contact-history-list li strong {
+  color: #2196F3;
+}
+
+/* Partner-specific styles */
+.partnership-table h2 {
+  color: #444;
+  margin-bottom: 1rem;
+}
+
+.table-controls {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
 }
 
 /* Styles shared between partner-details and comments-section */
@@ -232,6 +383,7 @@ button {
   min-height: 100px;
   resize: vertical;
   font-family: inherit;
+  line-height: 1.5;
 }
 
 .add-partner-form input:focus,
@@ -273,7 +425,41 @@ button {
   font-size: 0.9rem;
 }
 
-/* Navigation Buttons Container */
+/* Form improvements */
+.form-instructions {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+}
+
+.form-instructions h4 {
+  margin-top: 0;
+  color: #007bff;
+}
+
+.form-instructions ul {
+  padding-left: 1.5rem;
+  margin-bottom: 0;
+}
+
+.field-hint {
+  display: block;
+  color: #6c757d;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* Improve truncated text appearance */
+td {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Navigation Buttons Container styling */
 .nav-buttons {
   padding: 1rem;
   background-color: #f8f8f8;
@@ -339,56 +525,18 @@ button {
   border-left: 4px solid #6c757d;
 }
 
-/* Form Improvements */
-.form-instructions {
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  border-left: 4px solid #007bff;
-}
-
-.form-instructions h4 {
-  margin-top: 0;
-  color: #007bff;
-}
-
-.form-instructions ul {
-  padding-left: 1.5rem;
-  margin-bottom: 0;
-}
-
-.field-hint {
-  display: block;
-  color: #6c757d;
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
-}
-
-/* Improve textarea appearance */
-textarea {
-  font-family: inherit;
-  line-height: 1.5;
-  padding: 0.5rem;
-}
-
-/* Improve truncated text appearance */
-td {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* Editing Styles */
-.edit-event-form label {
+.edit-event-form label,
+.edit-partnership-form label {
   display: block;
   font-weight: bold;
   margin-bottom: 0.5rem;
 }
 
 .edit-event-form input,
-.edit-event-form textarea {
+.edit-event-form textarea,
+.edit-partnership-form input,
+.edit-partnership-form textarea {
   width: 100%;
   padding: 0.5rem;
   border: 1px solid #ccc;
@@ -607,4 +755,52 @@ td {
   font-size: 0.9rem;
   width: 100%;
   text-align: center;
+}
+
+/* Improved table visibility */
+.partnership-table table th {
+  background-color: #f2f2f2;
+  position: sticky;
+  top: 0;
+}
+
+.partnership-table table tr:hover {
+  background-color: #f5f5f5;
+}
+
+/* Responsive design improvements */
+@media (max-width: 1200px) {
+  .main-content {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .sidebar {
+    display: none;
+  }
+  
+  .main-content {
+    width: 100%;
+  }
+  
+  .app-header, .nav-buttons {
+    display: none;
+  }
+  
+  .partnership-table {
+    width: 100%;
+    box-shadow: none;
+  }
+  
+  button {
+    display: none;
+  }
 }

@@ -1,55 +1,116 @@
 import React, { useState } from 'react';
 
 const Sidebar = ({ onFilterChange }) => {
-  const [county, setCounty] = useState('');
-  const [partnerType, setPartnerType] = useState('');
+  const [organization, setOrganization] = useState('');
+  const [targetPopulation, setTargetPopulation] = useState('');
+  const [dateRange, setDateRange] = useState('all');
 
-  //update county filter and notify parent component
-  const handleCountyChange = (e) => {
-    const newCounty = e.target.value;
-    setCounty(newCounty);
-    
-    //TODO: optionally, update filters based on backend data if needed
-    onFilterChange({ county: newCounty, partnerType });
+  // Update organization filter and notify parent component
+  const handleOrganizationChange = (e) => {
+    const newOrganization = e.target.value;
+    setOrganization(newOrganization);
+    onFilterChange({ 
+      organization: newOrganization, 
+      targetPopulation, 
+      dateRange 
+    });
   };
 
-  //update partner type filter and notify parent component
-  const handlePartnerTypeChange = (e) => {
-    const newPartnerType = e.target.value;
-    setPartnerType(newPartnerType);
-    onFilterChange({ county, partnerType: newPartnerType });
+  // Update target population filter
+  const handleTargetPopulationChange = (e) => {
+    const newTargetPopulation = e.target.value;
+    setTargetPopulation(newTargetPopulation);
+    onFilterChange({ 
+      organization, 
+      targetPopulation: newTargetPopulation, 
+      dateRange 
+    });
+  };
+
+  // Update date range filter
+  const handleDateRangeChange = (e) => {
+    const newDateRange = e.target.value;
+    setDateRange(newDateRange);
+    onFilterChange({ 
+      organization, 
+      targetPopulation, 
+      dateRange: newDateRange 
+    });
+  };
+
+  // Handle print button click
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // Handle export to PDF (placeholder)
+  const handleExportPDF = () => {
+    alert('Export to PDF functionality will be implemented in a future update.');
   };
 
   return (
     <aside className="sidebar">
       <h2>Filters</h2>
-      <div>
-        <label>County:</label>
-        <select value={county} onChange={handleCountyChange}>
-          <option value="">All Counties</option>
-          <option value="County1">County 1</option>
-          <option value="County2">County 2</option>
-          <option value="County3">County 3</option>
-          
-          {/*TODO: Consider fetching counties from Flask backend */}
+      
+      <div className="filter-section">
+        <label htmlFor="organization-filter">Organization:</label>
+        <input
+          id="organization-filter"
+          type="text"
+          value={organization}
+          onChange={handleOrganizationChange}
+          placeholder="Type to filter by organization"
+        />
+      </div>
+      
+      <div className="filter-section">
+        <label htmlFor="population-filter">Target Population:</label>
+        <select 
+          id="population-filter" 
+          value={targetPopulation} 
+          onChange={handleTargetPopulationChange}
+        >
+          <option value="">All Populations</option>
+          <option value="unhoused">Unhoused</option>
+          <option value="youth">Youth</option>
+          <option value="seniors">Seniors</option>
+          <option value="lgbtq">LGBTQ+</option>
+          <option value="substance">Substance Use</option>
+          <option value="mental">Mental Health</option>
+          <option value="families">Families</option>
         </select>
       </div>
-      <div>
-        <label>Partner Status:</label>
-        <select value={partnerType} onChange={handlePartnerTypeChange}>
-          <option value="">All</option>
-          <option value="current">Current Partner</option>
-          <option value="seasonal">Seasonal Partner</option>
-          <option value="wavering">Wavering</option>
-          <option value="notInterested">Absolutely Not</option>
+      
+      <div className="filter-section">
+        <label htmlFor="date-range">Contact Date:</label>
+        <select 
+          id="date-range" 
+          value={dateRange} 
+          onChange={handleDateRangeChange}
+        >
+          <option value="all">All Time</option>
+          <option value="last30">Last 30 Days</option>
+          <option value="last90">Last 90 Days</option>
+          <option value="last180">Last 6 Months</option>
+          <option value="last365">Last Year</option>
         </select>
       </div>
-      <button onClick={() => alert('Print functionality not implemented')}>
-        Print
-      </button>
-      <button onClick={() => alert('Export functionality not implemented')}>
-        Download PDF
-      </button>
+      
+      <div className="sidebar-actions">
+        <button onClick={handlePrint} className="sidebar-button">
+          Print View
+        </button>
+        <button onClick={handleExportPDF} className="sidebar-button">
+          Export to PDF
+        </button>
+      </div>
+      
+      <div className="sidebar-help">
+        <h3>Quick Help</h3>
+        <p>Click on any row to view details.</p>
+        <p>Use filters above to narrow down results.</p>
+        <p>Add new partnerships using the "Add New Partnership" button.</p>
+      </div>
     </aside>
   );
 };
