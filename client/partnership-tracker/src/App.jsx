@@ -5,15 +5,18 @@ import PotentialPartnershipsTable from './components/PartnershipTable';
 import OutreachEventsTable from './components/OutreachEventsTable';
 import SeasonalEventsTable from './components/SeasonalEventsTable';
 import NotPartnershipsTable from './components/NotPartnershipsTable';
+import MonthlyUpdatesTable from './components/MonthlyUpdatesTable'; // New import
 import PartnershipDetails from './components/PartnerDetailsSection';
 import OutreachEventDetails from './components/OutreachEventDetails';
 import SeasonalEventDetails from './components/SeasonalEventDetails';
 import NotPartnershipDetails from './components/NotPartnershipDetails';
+import MonthlyUpdateDetails from './components/MonthlyUpdateDetails'; // New import
 import CommentsSection from './components/CommentsSection';
 import AddPartnershipForm from './components/AddPartnerForm';
 import AddOutreachEventForm from './components/AddOutreachEventForm';
 import AddSeasonalEventForm from './components/AddSeasonalEventForm';
 import AddNotPartnershipForm from './components/AddNotPartnershipForm';
+import AddMonthlyUpdateForm from './components/AddMonthlyUpdateForm'; // New import
 import './App.css';
 
 function App() {
@@ -26,7 +29,7 @@ function App() {
   // toggle to show comments vs. details
   const [showComments, setShowComments] = useState(false);
   
-  // state for active view: "partnerships", "outreach", "seasonal", or "notPartnerships"
+  // state for active view: "partnerships", "outreach", "seasonal", "notPartnerships", or "monthlyUpdates"
   const [activeView, setActiveView] = useState("partnerships");
   
   // state for active action: "view" or "add"
@@ -78,6 +81,8 @@ function App() {
         return "Seasonal Event";
       case "notPartnerships":
         return "Not Potential Partner";
+      case "monthlyUpdates":
+        return "Monthly Update";
       default:
         return "Item";
     }
@@ -94,6 +99,8 @@ function App() {
         return <AddSeasonalEventForm onEventAdded={() => setActiveAction("view")} />;
       } else if (activeView === "notPartnerships") {
         return <AddNotPartnershipForm onPartnerAdded={() => setActiveAction("view")} />;
+      } else if (activeView === "monthlyUpdates") {
+        return <AddMonthlyUpdateForm onUpdateAdded={() => setActiveAction("view")} />;
       }
     }
     
@@ -105,6 +112,8 @@ function App() {
       return <SeasonalEventsTable filters={filters} onEventSelect={handleItemSelect} />;
     } else if (activeView === "notPartnerships") {
       return <NotPartnershipsTable filters={filters} onPartnerSelect={handleItemSelect} />;
+    } else if (activeView === "monthlyUpdates") {
+      return <MonthlyUpdatesTable filters={filters} onUpdateSelect={handleItemSelect} />;
     }
   };
 
@@ -154,6 +163,14 @@ function App() {
           onPartnerUpdated={handleItemUpdated}
         />
       );
+    } else if (activeView === "monthlyUpdates") {
+      return (
+        <MonthlyUpdateDetails
+          update={selectedItem}
+          onClose={handleCloseDetails}
+          onUpdateUpdated={handleItemUpdated}
+        />
+      );
     }
   };
 
@@ -201,6 +218,16 @@ function App() {
           className={activeView === "notPartnerships" ? "active" : ""}
         >
           Not Potential Partnerships
+        </button>
+        <button 
+          onClick={() => {
+            setActiveView("monthlyUpdates");
+            setActiveAction("view");
+            setSelectedItem(null);
+          }}
+          className={activeView === "monthlyUpdates" ? "active" : ""}
+        >
+          Monthly Updates
         </button>
         <button 
           onClick={() => {

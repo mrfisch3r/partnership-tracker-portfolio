@@ -804,3 +804,76 @@ td {
     display: none;
   }
 }
+
+/* Add these styles to your existing App.css file */
+
+/* Long Text Content Container */
+.long-content-container {
+  max-width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 1rem;
+  border: 1px solid #eee;
+  background-color: #f9f9f9;
+  margin-top: 0.5rem;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+/* For monthly updates details view */
+.wide-textarea {
+  min-width: 100%;
+  min-height: 150px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  padding: 0.75rem;
+}
+
+/* Monthly update details specific styles */
+.monthly-update-details .detail-row {
+  margin-bottom: 1.5rem;
+}
+
+.monthly-update-details .detail-row strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #444;
+  font-size: 1rem;
+}
+
+/* For tables showing monthly updates */
+.partnership-table table td {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.partnership-table table td:hover {
+  white-space: normal;
+  word-wrap: break-word;
+  max-height: 100px;
+  overflow: auto;
+}
+
+/* Make month column narrower */
+.partnership-table table th:first-child,
+.partnership-table table td:first-child {
+  width: 100px;
+}
+
+/* Adjust column widths for monthly updates table */
+.partnership-table table th:nth-child(2),
+.partnership-table table td:nth-child(2),
+.partnership-table table th:nth-child(3),
+.partnership-table table td:nth-child(3) {
+  width: 40%;
+}
+
+/* Make notes column narrower */
+.partnership-table table th:last-child,
+.partnership-table table td:last-child {
+  width: 80px;
+  text-align: center;
+}
