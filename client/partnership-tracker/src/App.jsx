@@ -3,11 +3,14 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import PartnershipTable from './components/PartnershipTable';
 import OutreachEventsTable from './components/OutreachEventsTable';
+import SeasonalEventsTable from './components/SeasonalEventsTable';
 import PartnerDetailsSection from './components/PartnerDetailsSection';
 import OutreachEventDetails from './components/OutreachEventDetails';
+import SeasonalEventDetails from './components/SeasonalEventDetails';
 import CommentsSection from './components/CommentsSection';
 import AddPartnerForm from './components/AddPartnerForm';
 import AddOutreachEventForm from './components/AddOutreachEventForm';
+import AddSeasonalEventForm from './components/AddSeasonalEventForm';
 import './App.css';
 
 function App() {
@@ -20,7 +23,7 @@ function App() {
   // toggle to show comments vs. details
   const [showComments, setShowComments] = useState(false);
   
-  // state for active view: "partners" or "outreach"
+  // state for active view: "partners", "outreach", or "seasonal"
   const [activeView, setActiveView] = useState("partners");
   
   // state for active action: "view" or "add"
@@ -61,17 +64,39 @@ function App() {
     }
   };
 
+  // Get the appropriate label based on the active view
+  const getActiveViewLabel = () => {
+    switch (activeView) {
+      case "partners":
+        return "Partner";
+      case "outreach":
+        return "Outreach Event";
+      case "seasonal":
+        return "Seasonal Event";
+      default:
+        return "Item";
+    }
+  };
+
   // render either the table view or add form based on activeAction
   const renderMainContent = () => {
     if (activeAction === "add") {
-      return activeView === "partners" 
-        ? <AddPartnerForm onPartnerAdded={() => setActiveAction("view")} />
-        : <AddOutreachEventForm onEventAdded={() => setActiveAction("view")} />;
+      if (activeView === "partners") {
+        return <AddPartnerForm onPartnerAdded={() => setActiveAction("view")} />;
+      } else if (activeView === "outreach") {
+        return <AddOutreachEventForm onEventAdded={() => setActiveAction("view")} />;
+      } else if (activeView === "seasonal") {
+        return <AddSeasonalEventForm onEventAdded={() => setActiveAction("view")} />;
+      }
     }
     
-    return activeView === "partners"
-      ? <PartnershipTable filters={filters} onPartnerSelect={handleItemSelect} />
-      : <OutreachEventsTable filters={filters} onEventSelect={handleItemSelect} />;
+    if (activeView === "partners") {
+      return <PartnershipTable filters={filters} onPartnerSelect={handleItemSelect} />;
+    } else if (activeView === "outreach") {
+      return <OutreachEventsTable filters={filters} onEventSelect={handleItemSelect} />;
+    } else if (activeView === "seasonal") {
+      return <SeasonalEventsTable filters={filters} onEventSelect={handleItemSelect} />;
+    }
   };
 
   // render details/comments modal based on current state
@@ -87,20 +112,32 @@ function App() {
       );
     }
 
-    return activeView === "partners" ? (
-      <PartnerDetailsSection 
-        partner={selectedItem} 
-        onClose={handleCloseDetails} 
-        onComments={handleOpenComments}
-        onPartnerUpdated={handleItemUpdated}
-      />
-    ) : (
-      <OutreachEventDetails
-        event={selectedItem}
-        onClose={handleCloseDetails}
-        onEventUpdated={handleItemUpdated}
-      />
-    );
+    if (activeView === "partners") {
+      return (
+        <PartnerDetailsSection 
+          partner={selectedItem} 
+          onClose={handleCloseDetails} 
+          onComments={handleOpenComments}
+          onPartnerUpdated={handleItemUpdated}
+        />
+      );
+    } else if (activeView === "outreach") {
+      return (
+        <OutreachEventDetails
+          event={selectedItem}
+          onClose={handleCloseDetails}
+          onEventUpdated={handleItemUpdated}
+        />
+      );
+    } else if (activeView === "seasonal") {
+      return (
+        <SeasonalEventDetails
+          event={selectedItem}
+          onClose={handleCloseDetails}
+          onEventUpdated={handleItemUpdated}
+        />
+      );
+    }
   };
 
   return (
@@ -112,6 +149,7 @@ function App() {
           onClick={() => {
             setActiveView("partners");
             setActiveAction("view");
+            setSelectedItem(null);
           }}
           className={activeView === "partners" ? "active" : ""}
         >
@@ -121,16 +159,30 @@ function App() {
           onClick={() => {
             setActiveView("outreach");
             setActiveAction("view");
+            setSelectedItem(null);
           }}
           className={activeView === "outreach" ? "active" : ""}
         >
           Outreach Events
         </button>
         <button 
-          onClick={() => setActiveAction("add")}
+          onClick={() => {
+            setActiveView("seasonal");
+            setActiveAction("view");
+            setSelectedItem(null);
+          }}
+          className={activeView === "seasonal" ? "active" : ""}
+        >
+          Seasonal Events
+        </button>
+        <button 
+          onClick={() => {
+            setActiveAction("add");
+            setSelectedItem(null);
+          }}
           className={activeAction === "add" ? "active" : ""}
         >
-          Add New {activeView === "partners" ? "Partner" : "Event"}
+          Add New {getActiveViewLabel()}
         </button>
       </div>
       <div className="main-content">
