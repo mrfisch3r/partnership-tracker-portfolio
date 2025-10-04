@@ -38,7 +38,7 @@ const SeasonalEventDetails = ({ event, onClose, onEventUpdated, onEventDeleted }
     setSaveMessage('');
     
     try {
-      const res = await fetch(`http://localhost:5000/api/update_seasonal_event/${event.id}`, {
+      const res = await fetch(`http://localhost:5001/api/update_seasonal_event/${event.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -252,7 +252,7 @@ const SeasonalEventDetails = ({ event, onClose, onEventUpdated, onEventDeleted }
         {!isEditing && (
           <button 
             onClick={() => setIsEditing(true)} 
-            className="edit-button"
+            className="blue-button"
           >
             Edit Details
           </button>

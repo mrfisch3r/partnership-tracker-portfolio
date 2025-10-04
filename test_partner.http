@@ -1,3 +1,2 @@
 ### Add a simple partner
 POST http://127.0.0.1:5000/api/add-simple-partner
-Content-Type: application/json

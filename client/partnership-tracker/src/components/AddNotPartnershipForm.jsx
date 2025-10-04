@@ -28,7 +28,7 @@ const AddNotPartnershipForm = ({ onPartnerAdded }) => {
     
     try {
       setIsSubmitting(true);
-      const res = await fetch('http://localhost:5000/api/add_not_potential_partner', {
+      const res = await fetch('http://localhost:5001/api/add_not_potential_partner', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
