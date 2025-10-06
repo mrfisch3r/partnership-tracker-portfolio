@@ -238,7 +238,6 @@ def not_potential_partnerships_sheet_reader(file_path):
     print(f"Data successfully imported from '{sheet_name}' into NotPotentialPartnerships!")
     
     
-    
 #Read the Monthly Updates/ Monthly Highlights sheet into corresponding table
 def monthly_updates_sheet_reader(file_path):
     xls = pd.ExcelFile(file_path)
@@ -291,3 +290,67 @@ def monthly_updates_sheet_reader(file_path):
     db.session.commit()
 
     print(f"Data successfully imported from '{sheet_name}' into MonthlyUpdates!")
+    
+ 
+#Create a table for a county   
+def create_county_model(county_name):
+    # Sanitize table name
+    table_name = county_name.strip().replace(" ", "_").lower()
+
+    # Check if table exists
+    inspector = db.inspect(db.engine)
+    if table_name in inspector.get_table_names():
+        print(f"Table '{table_name}' already exists. Skipping creation.")
+        return None
+
+    # Dynamically create a subclass of DynamicCounty
+    class CountyTable(DynamicCounty):
+        __tablename__ = table_name
+
+    # Create the table in DB
+    CountyTable.__table__.create(bind=db.engine)
+    print(f"Table '{table_name}' created successfully.")
+
+    return CountyTable
+
+
+#Create an instance of the model/table into a dict
+def model_to_dict(instance):
+    """
+    Convert a SQLAlchemy model instance into a dict.
+    Works for any model since it inspects columns dynamically.
+    """
+    return {
+        column.name: getattr(instance, column.name)
+        for column in instance.__table__.columns
+    }
+    
+
+def log_change(instance, user_id, action, previous_instance=None):
+    """
+    Create a ChangeLog entry for any SQLAlchemy model.
+    Accepts either a model instance or dict for previous_instance.
+    """
+    # If previous_instance is provided as dict, use it directly
+    if isinstance(previous_instance, dict):
+        previous_data = previous_instance
+    elif previous_instance is not None:
+        previous_data = model_to_dict(previous_instance)
+    else:
+        previous_data = None
+
+    # Always convert the current instance to dict (unless DELETE)
+    new_data = model_to_dict(instance) if action != "DELETE" else None
+
+    log = ChangeLog(
+        table_name=instance.__tablename__,
+        record_id=instance.id,
+        user_id=user_id,
+        action=action,
+        previous_data=previous_data,
+        new_data=new_data
+    )
+
+    db.session.add(log)
+    db.session.commit()
+
