@@ -34,6 +34,20 @@ export function Login({ setPage }) {
   };
 
   const register = async () => {
+    // Validate required fields
+    if (!username.trim()) {
+      alert("Username is required");
+      return;
+    }
+    if (!email.trim()) {
+      alert("Email is required");
+      return;
+    }
+    if (!password.trim()) {
+      alert("Password is required");
+      return;
+    }
+
     try {
       const response = await fetch("http://localhost:5001/api/register", {
         method: "POST",
