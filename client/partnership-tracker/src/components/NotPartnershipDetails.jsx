@@ -38,7 +38,7 @@ const NotPartnershipDetails = ({ partner, onClose, onPartnerUpdated, onPartnerDe
     setSaveMessage('');
     
     try {
-      const res = await fetch(`http://localhost:5001/api/update_not_potential_partners/${partner.id}`, {
+      const res = await fetch(`http://localhost:5000/api/update_not_potential_partners/${partner.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -252,7 +252,7 @@ const NotPartnershipDetails = ({ partner, onClose, onPartnerUpdated, onPartnerDe
         {!isEditing && (
           <button 
             onClick={() => setIsEditing(true)} 
-            className="blue-button"
+            className="edit-button"
           >
             Edit Details
           </button>

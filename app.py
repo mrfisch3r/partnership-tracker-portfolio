@@ -14,17 +14,7 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-CORS(
-    app,
-    resources={r"/api/*": {
-        "origins": ["http://localhost:5173"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
-        "supports_credentials": True,
-        "expose_headers": ["Content-Type"]
-    }},
-    supports_credentials=True  # keep also at top-level for clarity
-)
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
 db.init_app(app)
 
 
@@ -261,7 +251,9 @@ def add_simple_partner():
 
     partner = PotentialPartnerships(
         name="Community Partner A",
-        
+        county="County 1",
+        status="current",
+        contact_date="2025-1-10",
     )
     db.session.add(partner)
     db.session.commit()
@@ -998,4 +990,4 @@ def delete_county_entry(id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=True)

@@ -77,7 +77,7 @@ const PartnershipDetails = ({ partner, onClose, onComments, onPartnerUpdated, on
     setSaveMessage('');
     
     try {
-      const res = await fetch(`http://localhost:5001/api/update_potential_partners/${partner.id}`, {
+      const res = await fetch(`http://localhost:5000/api/update_potential_partners/${partner.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -139,32 +139,11 @@ const PartnershipDetails = ({ partner, onClose, onComments, onPartnerUpdated, on
   };
 
   return (
-    <>
-      <div className="modal-backdrop" onClick={onClose}></div>
-      <div className="partner-details">
+    <div className="partner-details">
       {/* Close button in top right corner */}
-        <div style={{display: "flex", justifyContent: "space-between", alignItems: "center"}}>
-          <h3>Potential Partnership Details</h3>
-          <button 
-            onClick={onClose}
-            style={{
-              backgroundColor: "#f44336",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              width: "30px",
-              height: "30px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              fontSize: "20px",
-              fontWeight: "bold"
-            }}
-          >
-            ×
-          </button>
-        </div>
+      <button className="close-button" onClick={onClose}>X</button>
+      <h3>Potential Partnership Details</h3>
+      
       {isEditing ? (
         <div className="edit-partnership-form">
           {/* Edit form fields */}
@@ -346,12 +325,12 @@ const PartnershipDetails = ({ partner, onClose, onComments, onPartnerUpdated, on
         {!isEditing && (
           <button 
             onClick={() => setIsEditing(true)} 
-            className="blue-button"
+            className="edit-button"
           >
             Edit Details
           </button>
         )}
-        <button className= 'red-button' onClick={onClose}>Close</button>
+        <button onClick={onClose}>Close</button>
       </div>
       
       {/* Use the NotesModal component */}
@@ -373,8 +352,7 @@ const PartnershipDetails = ({ partner, onClose, onComments, onPartnerUpdated, on
         itemName={partner.name || "this partnership"}
         onDeleteSuccess={handleDeleteSuccess}
       />
-      </div>
-    </>
+    </div>
   );
 };
 

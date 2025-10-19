@@ -54,7 +54,7 @@ const NotesModal = ({ isOpen, onClose, eventId, initialNotes, eventName, onSaveS
     setSaveMessage('');
     
     try {
-      const res = await fetch(`http://localhost:5001/api/update_outreach_event/${eventId}`, {
+      const res = await fetch(`http://localhost:5000/api/update_outreach_event/${eventId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

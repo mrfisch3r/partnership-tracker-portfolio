@@ -31,7 +31,7 @@ const AddMonthlyUpdateForm = ({ onUpdateAdded }) => {
     try {
       setIsSubmitting(true);
       // Send POST request to backend
-      const res = await fetch('http://localhost:5001/api/add_monthly_update', {
+      const res = await fetch('http://localhost:5000/api/add_monthly_update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -149,7 +149,7 @@ const AddMonthlyUpdateForm = ({ onUpdateAdded }) => {
           <small className="field-hint">Any additional information important for the monthly record</small>
         </div>
 
-        <button type="submit" className= 'blue-button' disabled={isSubmitting}>
+        <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Adding...' : 'Add Monthly Update'}
         </button>
       </form>

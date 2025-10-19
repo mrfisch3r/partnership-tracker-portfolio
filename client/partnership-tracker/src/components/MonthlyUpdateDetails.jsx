@@ -25,7 +25,7 @@ const MonthlyUpdateDetails = ({ update, onClose, onUpdateUpdated, onUpdateDelete
     setSaveMessage('');
     
     try {
-      const res = await fetch(`http://localhost:5001/api/update_monthly_update/${update.id}`, {
+      const res = await fetch(`http://localhost:5000/api/update_monthly_update/${update.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -229,7 +229,7 @@ const MonthlyUpdateDetails = ({ update, onClose, onUpdateUpdated, onUpdateDelete
         {!isEditing && (
           <button 
             onClick={() => setIsEditing(true)} 
-            className="blue-button"
+            className="edit-button"
           >
             Edit Details
           </button>
