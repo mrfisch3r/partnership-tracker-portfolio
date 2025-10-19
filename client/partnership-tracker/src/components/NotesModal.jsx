@@ -154,7 +154,7 @@ const NotesModal = ({ isOpen, onClose, eventId, initialNotes, eventName, onSaveS
             <div className="button-group">
               <button 
                 onClick={() => setIsEditing(true)} 
-                className="edit-button"
+                className="blue-button"
               >
                 Edit Notes
               </button>
