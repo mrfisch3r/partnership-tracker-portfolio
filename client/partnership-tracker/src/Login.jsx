@@ -28,7 +28,7 @@ export function Login({ setPage }) {
         alert("Invalid credentials");
       }
     } catch (error) {
-      print(error);
+      console.error(error);
       alert("Login failed. Make sure the backend is running.");
     }
   };
@@ -57,7 +57,7 @@ export function Login({ setPage }) {
           : alert("Unknown error");
       }
     } catch (error) {
-      print(error);
+      console.error(error);
       alert("Registration failed. Make sure the backend is running.");
     }
   };
