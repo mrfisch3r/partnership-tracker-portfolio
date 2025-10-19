@@ -12,7 +12,7 @@ const PotentialPartnershipsTable = ({ filters, onPartnerSelect, refreshTrigger =
     async function fetchPartners() {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:5000/api/get_partners');
+        const res = await fetch('http://localhost:5001/api/get_partners');
         if (!res.ok) {
           throw new Error('Failed to load potential partnerships');
         }
@@ -94,7 +94,7 @@ const PotentialPartnershipsTable = ({ filters, onPartnerSelect, refreshTrigger =
     <div className="partnership-table" ref={tableRef}>
       <h2>Potential Partnerships</h2>
       <div className="table-controls">
-        <button onClick={toggleSort}>
+        <button className="blue-button" onClick={toggleSort}>
           Sort by Contact Date ({sortOrder === 'desc' ? 'Newest First' : 'Oldest First'})
         </button>
       </div>

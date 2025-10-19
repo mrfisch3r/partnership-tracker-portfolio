@@ -11,7 +11,7 @@ const MonthlyUpdatesTable = ({ filters, onUpdateSelect, refreshTrigger = 0 }) =>
     const fetchUpdates = async () => {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:5000/api/get_monthly_updates');
+        const res = await fetch('http://localhost:5001/api/get_monthly_updates');
         if (!res.ok) {
           throw new Error('Failed to fetch monthly updates');
         }
@@ -103,9 +103,11 @@ const MonthlyUpdatesTable = ({ filters, onUpdateSelect, refreshTrigger = 0 }) =>
   return (
     <div className="partnership-table">
       <h2>Monthly Updates</h2>
-      <button onClick={toggleSort}>
+      <div className = 'table-controls'>
+      <button className = 'blue-button' onClick={toggleSort}>
         Sort by Date ({sortOrder === 'desc' ? 'Newest First' : 'Oldest First'})
       </button>
+      </div>
       
       <div className="table-instructions">
         <p>Click on any row to view full details and notes. Monthly updates track progress, findings, and barriers encountered.</p>

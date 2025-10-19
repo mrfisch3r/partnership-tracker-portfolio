@@ -33,7 +33,7 @@ const DeleteConfirmationModal = ({
       setIsDeleting(true);
       setError(null);
       
-      const response = await fetch('http://localhost:5000/api/delete_entry', {
+      const response = await fetch('http://localhost:5001/api/delete_entry', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'

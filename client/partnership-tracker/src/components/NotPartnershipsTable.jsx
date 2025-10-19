@@ -11,7 +11,7 @@ const NotPartnershipsTable = ({ filters, onPartnerSelect, refreshTrigger = 0 }) 
     async function fetchPartners() {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:5000/api/get_not_partners');
+        const res = await fetch('http://localhost:5001/api/get_not_partners');
         if (!res.ok) {
           throw new Error('Failed to load not potential partnerships');
         }
@@ -80,7 +80,7 @@ const NotPartnershipsTable = ({ filters, onPartnerSelect, refreshTrigger = 0 }) 
     <div className="partnership-table">
       <h2>Not Potential Partnerships</h2>
       <div className="table-controls">
-        <button onClick={toggleSort}>
+        <button className='blue-button' onClick={toggleSort}>
           Sort by Contact Date ({sortOrder === 'desc' ? 'Newest First' : 'Oldest First'})
         </button>
       </div>

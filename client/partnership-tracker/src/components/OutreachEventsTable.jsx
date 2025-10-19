@@ -12,7 +12,7 @@ const OutreachEventsTable = ({ filters, onEventSelect, refreshTrigger = 0 }) => 
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        const res = await fetch('http://localhost:5000/api/get_outreach_events');
+        const res = await fetch('http://localhost:5001/api/get_outreach_events');
         if (!res.ok) {
           throw new Error('Failed to fetch events');
         }
@@ -97,7 +97,7 @@ const OutreachEventsTable = ({ filters, onEventSelect, refreshTrigger = 0 }) => 
     <div className="partnership-table">
       <h2>Outreach Events</h2>
       <div className="table-controls">
-        <button onClick={toggleSort}>
+        <button className = 'blue-button' onClick={toggleSort}>
           Sort by Date ({sortOrder === 'desc' ? 'Newest First' : 'Oldest First'})
         </button>
       </div>

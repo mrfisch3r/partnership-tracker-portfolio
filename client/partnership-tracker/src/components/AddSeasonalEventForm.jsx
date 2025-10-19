@@ -34,7 +34,7 @@ const AddSeasonalEventForm = ({ onEventAdded }) => {
     try {
       setIsSubmitting(true);
       // Send POST request to backend
-      const res = await fetch('http://localhost:5000/api/add_seasonal_event', {
+      const res = await fetch('http://localhost:5001/api/add_seasonal_event', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -223,7 +223,7 @@ function App() {
 
   return (
     <div className="app-container">
-      <Header />
+     
       {/* navigation buttons to switch views */}
       <div className="nav-buttons">
         <button 
