@@ -23,19 +23,18 @@ a:hover {
 }
 
 button {
-  color: black
+  color: black;
 }
 
-li{
-  color:black
+li {
+  color: black;
 }
 
-select
-{
-  color:black
+select {
+  color: black;
 }
-p
-{color:black
+p {
+  color: black;
 }
 
 body {
@@ -49,6 +48,11 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+}
+
+input {
+  background-color: white;
+  color: black;
 }
 
 button {

@@ -92,7 +92,8 @@ class ChangeLog(db.Model):
 class Staff(db.Model):
     __tablename__ = "staff"   
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(
+        db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)  # should be a string, not integer
@@ -128,5 +129,5 @@ class Staff(db.Model):
     
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()  # This creates the tables
+        db.create_all() 
     print("Database and tables created successfully!")

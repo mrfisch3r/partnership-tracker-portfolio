@@ -7,12 +7,20 @@ from functools import wraps
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
 
 
-app.config["JWT_SECRET_KEY"] = "super-secret-key"  # replace with env var in production
-jwt = JWTManager(app)
+
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["JWT_SECRET_KEY"] = "super-secret-key"
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
+app.config["JWT_COOKIE_CSRF_PROTECT"] = False
+app.config["JWT_CSRF_IN_COOKIES"] = False
+app.config["JWT_CSRF_CHECK_FORM"] = False
+app.config["JWT_TOKEN_LOCATION"] = ["headers"]
+app.config["JWT_HEADER_NAME"] = "Authorization"
+app.config["JWT_HEADER_TYPE"] = "Bearer"
+jwt = JWTManager(app)
 
 CORS(
     app,
@@ -31,6 +39,13 @@ db.init_app(app)
 # Ensure tables are created
 with app.app_context():
     db.create_all()
+    admin = Staff.query.filter_by(username="admin").first()
+    if not admin:
+        admin = Staff(username="admin", email="admin@ukhc.com", role="admin")
+        admin.set_password("admin123")
+        db.session.add(admin)
+        db.session.commit()
+        print("Default admin account created!")
     
     
 #_______________________________________________________________________________________________________________________________
@@ -69,10 +84,40 @@ def login():
         return jsonify({"error": "Invalid username or password"}), 401
 
     # Create JWT with role info inside
-    access_token = create_access_token(identity={"id": staff.id, "role": staff.role})
+    access_token = create_access_token(identity=str(staff.id), additional_claims={"role": staff.role, 'username': staff.username})
     return jsonify({"access_token": access_token}), 200
 
-
+@app.route("/api/verify-token", methods=["GET"])
+def verify_token():
+    try:
+        # Debug: Print what we're receiving
+        print("Headers:", dict(request.headers))
+        print("Authorization:", request.headers.get('Authorization'))
+        
+        # Try to get the token manually
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({"error": "No Authorization header"}), 401
+            
+        if not auth_header.startswith('Bearer '):
+            return jsonify({"error": "Invalid Authorization format"}), 401
+            
+        token = auth_header[7:]  # Remove 'Bearer '
+        print("Token:", token[:50] + "...")  # Print first 50 chars
+        
+        # Try manual JWT verification
+        from flask_jwt_extended import decode_token
+        try:
+            decoded = decode_token(token)
+            print("Decoded token:", decoded)
+            return jsonify({"valid": True, "user": decoded.get('sub')}), 200
+        except Exception as jwt_error:
+            print("JWT Error:", str(jwt_error))
+            return jsonify({"error": f"JWT Error: {str(jwt_error)}"}), 401
+            
+    except Exception as e:
+        print("General Error:", str(e))
+        return jsonify({"error": f"General Error: {str(e)}"}), 500
 
 def role_required(required_role):
     def wrapper(fn):
