@@ -18,3 +18,4 @@ pytest test/test_token.py -v
 - `test_get_token` - Tests getting a token from login endpoint
 - `test_verify_token` - Tests verifying a valid token
 - `test_verify_invalid_token` - Tests handling invalid tokens
+  cd
