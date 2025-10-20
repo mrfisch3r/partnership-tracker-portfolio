@@ -340,7 +340,7 @@ export function MainView() {
 
       <div className="main-content">
         <Sidebar onFilterChange={handleFilterChange} />
-        {renderMainContent()}
+        <div className="content-area">{renderMainContent()}</div>
       </div>
       {renderDetails()}
     </div>

@@ -41,11 +41,12 @@ body {
   display: flex;
   flex-direction: column;
   font-family: Arial, sans-serif;
-  min-width: 800px;
+  height: 100vh;
 }
 
 .main-content {
   display: flex;
+  flex: 1;
 }
 
 /* Header */
@@ -81,15 +82,23 @@ body {
 
 /* Sidebar Styles */
 .sidebar {
-  width: 250px;
   padding: 1.5rem;
   background-color: #f5f5f5;
   border-right: 1px solid #e0e0e0;
   margin-right: 1rem;
   height: 100%;
   box-sizing: border-box;
-  display: flex;
   flex-direction: column;
+
+  /* Allow sidebar to shrink */
+  flex: 0 1 250px; /* Don't grow, allow shrink, 250px base */
+}
+
+/* Content area */
+.content-area {
+  flex: 1; /* Take remaining space */
+  min-width: 0px; /* Ensure minimum width for content */
+  overflow-x: auto; /* Add horizontal scroll if needed */
 }
 
 .sidebar h2 {
@@ -178,9 +187,9 @@ body {
   flex: 1;
   padding: 1rem;
   width: 100%;
-  height: 100%;
+
   table-layout: fixed;
-  height: 400px;
+
   overflow-y: auto;
 }
 
@@ -195,6 +204,8 @@ td {
   padding: 0.5rem;
   border: 1px solid #ccc;
   text-align: left;
+  text-overflow: unset;
+  overflow: visible;
 }
 
 /* Contact History Styles */
@@ -482,14 +493,6 @@ button {
   color: #6c757d;
   font-size: 0.8rem;
   margin-top: 0.25rem;
-}
-
-/* Improve truncated text appearance */
-td {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Navigation Buttons Container styling */
@@ -816,18 +819,7 @@ button.red-button:hover {
   background-color: #f5f5f5;
 }
 
-/* Responsive design improvements */
-@media (max-width: 1200px) {
-  .main-content {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    margin-right: 0;
-    margin-bottom: 1rem;
-  }
-}
+/* Responsive design improvements - REMOVED to prevent stacking */
 
 /* Print styles */
 @media print {
@@ -897,20 +889,20 @@ button.red-button:hover {
 .partnership-table table td {
   max-width: 250px;
   overflow: hidden;
-  text-overflow: ellipsis;
+
   white-space: nowrap;
 }
 
 .partnership-table table td:hover {
   word-wrap: break-word;
-  max-height: 100px;
+
   overflow: auto;
 }
 
 /* Make month column narrower */
 .partnership-table table th:first-child,
 .partnership-table table td:first-child {
-  width: 100px;
+  width: 20%;
 }
 
 /* Adjust column widths for monthly updates table */
@@ -918,7 +910,7 @@ button.red-button:hover {
 .partnership-table table td:nth-child(2),
 .partnership-table table th:nth-child(3),
 .partnership-table table td:nth-child(3) {
-  width: 40%;
+  width: 20%;
 }
 
 /* Make notes column narrower */
