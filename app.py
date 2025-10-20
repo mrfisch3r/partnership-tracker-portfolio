@@ -441,6 +441,7 @@ def upload_monthly_updates():
 
 # ADD AN ENTRY TO OutreachEvents TABLE
 @app.route("/api/add_outreach_event", methods=["POST"])
+@jwt_required()
 def add_outreach_event():
     data = request.json
     name = data.get("name")
@@ -466,7 +467,7 @@ def add_outreach_event():
     db.session.commit()
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
 
 
     # Now log the creation
@@ -489,6 +490,7 @@ def add_outreach_event():
     
 #ADD AN ENTRY TO SeasonalEvents TABLE
 @app.route("/api/add_seasonal_event", methods=["POST"])
+@jwt_required()
 def add_seasonal_event():
     data = request.json
     name = data.get("name")
@@ -512,7 +514,7 @@ def add_seasonal_event():
     db.session.commit()
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
     
     # Now log the creation
     log_change(new_event, user_id=user_id, action="CREATE")
@@ -534,6 +536,7 @@ def add_seasonal_event():
 
 #ADD AN ENTRY TO PotentialPartnerships TABLE
 @app.route("/api/add_potential_partner", methods=["POST"])
+@jwt_required()
 def add_partner():
     data = request.json
     name = data.get("name")
@@ -557,7 +560,7 @@ def add_partner():
     db.session.commit()
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
     
     # Now log the creation
     log_change(new_partner, user_id=user_id, action="CREATE")
@@ -579,6 +582,7 @@ def add_partner():
     
 #ADD ENTRY TO NotPotentialPartnerships TABLE
 @app.route("/api/add_not_potential_partner", methods=["POST"])
+@jwt_required()
 def add_not_potential_partner():
     data = request.json
     name = data.get("name")
@@ -603,7 +607,7 @@ def add_not_potential_partner():
     db.session.commit()
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
     
     # Now log the creation
     log_change(new_entry, user_id=user_id, action="CREATE")
@@ -625,6 +629,7 @@ def add_not_potential_partner():
     
 #ADD ENTRY TO MonthlyUpates TABLE
 @app.route("/api/add_monthly_update", methods=["POST"])
+@jwt_required()
 def add_monthly_update():
     data = request.json
     new_update = MonthlyUpdates(
@@ -637,7 +642,7 @@ def add_monthly_update():
     db.session.commit()
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
     
     # Now log the creation
     log_change(new_update, user_id=user_id, action="CREATE")
@@ -656,6 +661,7 @@ def add_monthly_update():
 
 # ADD ENTRY TO A COUNTY TABLE
 @app.route("/api/add_county_entry", methods=["POST"])
+@jwt_required()
 def add_county_entry():
     data = request.json
     county_name = data.get("county_name")
@@ -698,7 +704,7 @@ def add_county_entry():
     db.session.commit()
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
     
     # Now log the creation
     log_change(new_entry, user_id=user_id, action="CREATE")
@@ -712,6 +718,7 @@ def add_county_entry():
     
 #UPDATE ENTRY IN OutreachEvents TABLE    
 @app.route("/api/update_outreach_event/<int:id>", methods=["PUT"])
+@jwt_required()
 def update_outreach_event(id):
     data = request.json
     event = OutreachEvents.query.get(id)
@@ -731,7 +738,7 @@ def update_outreach_event(id):
     db.session.commit()
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
     
     log_change(
         instance=event,
@@ -757,6 +764,7 @@ def update_outreach_event(id):
     
 #UPDATE ENTRY IN SeasonalEvents TABLE  
 @app.route("/api/update_seasonal_event/<int:id>", methods=["PUT"])
+@jwt_required()
 def update_seasonal_event(id):
     data = request.json
     event = SeasonalEvents.query.get(id)
@@ -776,7 +784,7 @@ def update_seasonal_event(id):
     db.session.commit()
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
     
     log_change(
         instance=event,
@@ -821,7 +829,7 @@ def update_partners(id):
     db.session.commit()
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
     
     log_change(
         instance=partner,
@@ -866,7 +874,7 @@ def update_not_partners(id):
     db.session.commit()
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
     
     log_change(
         instance=partner,
@@ -935,7 +943,7 @@ def update_county_entry(id):
     db.session.commit()
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
     
     log_change(
         instance=entry,
@@ -978,7 +986,7 @@ def delete_entry():
     previous_snapshot = model_to_dict(entry)
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
 
     # Log BEFORE deleting (so we still have the instance)
     log_change(
@@ -1024,7 +1032,7 @@ def delete_county_entry(id):
     previous_snapshot = model_to_dict(entry)
     
     identity = get_jwt_identity()
-    user_id = identity["id"]
+    user_id = identity
 
     # Log BEFORE deleting (so we still have the instance)
     log_change(
