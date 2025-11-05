@@ -107,6 +107,32 @@ class Staff(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+class SiteEvent(db.Model):
+    __tablename__ = "siteevents"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    site_name = db.Column(db.Text(200), nullable=False)
+    on_partnership_tracker = db.Column(db.Boolean, default=False)
+    location_on_tracker = db.Column(db.Text(200))
+    contact_name = db.Column(db.Text(100))
+    contact_method = db.Column(db.Text(100))
+    physical_address = db.Column(db.Text(200))
+    target_population = db.Column(db.Text(200))
+    offer_outreach_frequency = db.Column(db.Text(100))
+    next_event_datetime = db.Column(db.Text(100))
+    open_to_public = db.Column(db.Boolean, default=False)
+    site_type = db.Column(db.Text(100))
+    # Remove notes column here — notes will be in the Notes table
+    
+class Note(db.Model):
+    __tablename__ = "notes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    object_id = db.Column(db.Integer, nullable=False)  # Links to SiteEvent.id
+    object_type = db.Column(db.Text(50), nullable=False)  # e.g. 'siteevents'
+    author = db.Column(db.Text(100), nullable=False)
+    note_text = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.now())
 
 #class ContactInfo(db.Model):
     #SEPERATE TABLES FOR CONTACT INFO IN CASE THERE ARE MULTIPLE CONTACTS FOR ONE ENTRY, MAY NOT BE NECESSARY
@@ -131,3 +157,4 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all() 
     print("Database and tables created successfully!")
+
