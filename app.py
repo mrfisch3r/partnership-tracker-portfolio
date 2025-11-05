@@ -83,41 +83,15 @@ def login():
     if not staff or not staff.check_password(password):
         return jsonify({"error": "Invalid username or password"}), 401
 
-    # Create JWT with role info inside
-    access_token = create_access_token(identity=str(staff.id), additional_claims={"role": staff.role, 'username': staff.username})
+    # Create JWT with staff.id as string identity, role in additional claims
+    access_token = create_access_token(
+        identity=str(staff.id),  # must be string
+        additional_claims={"role": staff.role}
+    )
+
     return jsonify({"access_token": access_token}), 200
 
-@app.route("/api/verify-token", methods=["GET"])
-def verify_token():
-    try:
-        # Debug: Print what we're receiving
-        print("Headers:", dict(request.headers))
-        print("Authorization:", request.headers.get('Authorization'))
-        
-        # Try to get the token manually
-        auth_header = request.headers.get('Authorization')
-        if not auth_header:
-            return jsonify({"error": "No Authorization header"}), 401
-            
-        if not auth_header.startswith('Bearer '):
-            return jsonify({"error": "Invalid Authorization format"}), 401
-            
-        token = auth_header[7:]  # Remove 'Bearer '
-        print("Token:", token[:50] + "...")  # Print first 50 chars
-        
-        # Try manual JWT verification
-        from flask_jwt_extended import decode_token
-        try:
-            decoded = decode_token(token)
-            print("Decoded token:", decoded)
-            return jsonify({"valid": True, "user": decoded.get('sub')}), 200
-        except Exception as jwt_error:
-            print("JWT Error:", str(jwt_error))
-            return jsonify({"error": f"JWT Error: {str(jwt_error)}"}), 401
-            
-    except Exception as e:
-        print("General Error:", str(e))
-        return jsonify({"error": f"General Error: {str(e)}"}), 500
+
 
 def role_required(required_role):
     def wrapper(fn):
@@ -295,6 +269,43 @@ def get_county_entries():
 
     return jsonify(result)
 
+# GET ALL ENTRIES IN SITE EVENTS TABLE
+@app.route("/api/get_site_events")
+def get_site_events():
+    siteevents = SiteEvent.query.all()
+    return jsonify([
+        {
+            "id": s.id,
+            "site_name": s.site_name,
+            "on_partnership_tracker": s.on_partnership_tracker,
+            "location_on_tracker": s.location_on_tracker,
+            "contact_name": s.contact_name,
+            "contact_method": s.contact_method,
+            "physical_address": s.physical_address,
+            "target_population": s.target_population,
+            "offer_outreach_frequency": s.offer_outreach_frequency,
+            "next_event_datetime": s.next_event_datetime,
+            "open_to_public": s.open_to_public,
+            "site_type": s.site_type
+        } for s in siteevents
+    ])
+    
+#GET NOTES FOR AN ENTRY
+@app.route("/api/get_notes/<string:object_type>/<int:object_id>/notes", methods=["GET"])
+def get_notes(object_type, object_id):
+    # Fetch all notes matching this table and entry
+    notes = Note.query.filter_by(object_type=object_type, object_id=object_id)\
+                      .order_by(Note.created_at.desc()).all()
+
+    return jsonify([
+        {
+            "id": n.id,
+            "author": n.author,
+            "note_text": n.note_text,
+            "created_at": n.created_at.isoformat()
+        } for n in notes
+    ])
+    
 #____________________________________________________________________________________________________________
 
 #ADD A DUMMY DATA FOR POTENTIAL PARTNERSHIPS
@@ -306,7 +317,9 @@ def add_simple_partner():
 
     partner = PotentialPartnerships(
         name="Community Partner A",
-        
+        county="County 1",
+        status="current",
+        contact_date="2025-1-10",
     )
     db.session.add(partner)
     db.session.commit()
@@ -466,12 +479,26 @@ def add_outreach_event():
     db.session.add(new_event)
     db.session.commit()
     
-    identity = get_jwt_identity()
-    user_id = identity
-
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
 
     # Now log the creation
     log_change(new_event, user_id=user_id, action="CREATE")
+    
+    
+    # --- If a note was provided, create it ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=new_event.id,
+            object_type="outreachevents",
+            author=username,
+            note_text=note_text.strip()
+        )
+        db.session.add(new_note)
+        db.session.commit()
 
     return jsonify({
         "message": "Outreach event added successfully.",
@@ -513,11 +540,25 @@ def add_seasonal_event():
     db.session.add(new_event)
     db.session.commit()
     
-    identity = get_jwt_identity()
-    user_id = identity
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
     
     # Now log the creation
     log_change(new_event, user_id=user_id, action="CREATE")
+    
+    # --- If a note was provided, create it ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=new_event.id,
+            object_type="seasonalevents",
+            author=username,
+            note_text=note_text.strip()
+        )
+        db.session.add(new_note)
+        db.session.commit()
     
     return jsonify({
         "message": "Seasonal event added successfully.",
@@ -559,11 +600,26 @@ def add_partner():
     db.session.add(new_partner)
     db.session.commit()
     
-    identity = get_jwt_identity()
-    user_id = identity
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
     
     # Now log the creation
     log_change(new_partner, user_id=user_id, action="CREATE")
+    
+    
+    # --- If a note was provided, create it ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=new_partner.id,
+            object_type="potentialpartnerships",
+            author=username,
+            note_text=note_text.strip()
+        )
+        db.session.add(new_note)
+        db.session.commit()
     
     return jsonify({
         "message": "Partner added successfully.",
@@ -606,8 +662,23 @@ def add_not_potential_partner():
     db.session.add(new_entry)
     db.session.commit()
     
-    identity = get_jwt_identity()
-    user_id = identity
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
+    
+    
+    # --- If a note was provided, create it ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=new_entry.id,
+            object_type="notpotentialpartnerships",
+            author=username,
+            note_text=note_text.strip()
+        )
+        db.session.add(new_note)
+        db.session.commit()
     
     # Now log the creation
     log_change(new_entry, user_id=user_id, action="CREATE")
@@ -641,11 +712,27 @@ def add_monthly_update():
     db.session.add(new_update)
     db.session.commit()
     
-    identity = get_jwt_identity()
-    user_id = identity
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
     
     # Now log the creation
     log_change(new_update, user_id=user_id, action="CREATE")
+    
+    
+    
+    # --- If a note was provided, create it ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=new_update.id,
+            object_type="monthlyupdates",
+            author=username,
+            note_text=note_text.strip()
+        )
+        db.session.add(new_note)
+        db.session.commit()
     
     return jsonify({
         "message": "Monthly update added successfully.",
@@ -703,17 +790,153 @@ def add_county_entry():
     db.session.add(new_entry)
     db.session.commit()
     
-    identity = get_jwt_identity()
-    user_id = identity
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
     
     # Now log the creation
     log_change(new_entry, user_id=user_id, action="CREATE")
+    
+    
+    # --- If a note was provided, create it ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=new_entry.id,
+            object_type=table_name,
+            author=username,
+            note_text=note_text.strip()
+        )
+        db.session.add(new_note)
+        db.session.commit()
 
     return jsonify({
         "message": f"Entry added to '{county_name}' table successfully.",
         "entry": {column.name: getattr(new_entry, column.name) for column in new_entry.__table__.columns}
     })
     
+    
+# ADD ENTRY TO SiteEvent TABLE (and create a user-added Note if provided)
+@app.route("/api/add_site_event", methods=["POST"])
+@jwt_required()
+def add_site_event():
+    data = request.json
+
+    # --- Create the SiteEvent record ---
+    new_site_event = SiteEvent(
+        site_name=data.get("site_name"),
+        on_partnership_tracker=data.get("on_partnership_tracker", False),
+        location_on_tracker=data.get("location_on_tracker"),
+        contact_name=data.get("contact_name"),
+        contact_method=data.get("contact_method"),
+        physical_address=data.get("physical_address"),
+        target_population=data.get("target_population"),
+        offer_outreach_frequency=data.get("offer_outreach_frequency"),
+        next_event_datetime=data.get("next_event_datetime"),
+        open_to_public=data.get("open_to_public", False),
+        site_type=data.get("site_type")
+    )
+
+    db.session.add(new_site_event)
+    db.session.commit()
+
+    # --- Log the creation ---
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
+
+    log_change(new_site_event, user_id=user_id, action="CREATE")
+
+    # --- If a note was provided, create it ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=new_site_event.id,
+            object_type="siteevents",
+            author=username,
+            note_text=note_text.strip()
+        )
+        db.session.add(new_note)
+        db.session.commit()
+
+    # --- Response ---
+    response = {
+        "message": "Site event added successfully.",
+        "site_event": {
+            "id": new_site_event.id,
+            "site_name": new_site_event.site_name,
+            "on_partnership_tracker": new_site_event.on_partnership_tracker,
+            "location_on_tracker": new_site_event.location_on_tracker,
+            "contact_name": new_site_event.contact_name,
+            "contact_method": new_site_event.contact_method,
+            "physical_address": new_site_event.physical_address,
+            "target_population": new_site_event.target_population,
+            "offer_outreach_frequency": new_site_event.offer_outreach_frequency,
+            "next_event_datetime": new_site_event.next_event_datetime,
+            "open_to_public": new_site_event.open_to_public,
+            "site_type": new_site_event.site_type
+        }
+    }
+
+    if new_note:
+        response["note"] = {
+            "id": new_note.id,
+            "author": new_note.author,
+            "note_text": new_note.note_text,
+            "created_at": new_note.created_at
+        }
+
+    return jsonify(response)
+
+    
+# ADD NOTES TO AN ENTRY    
+@app.route("/api/add_note_to_entry/<string:object_type>/<int:object_id>/notes", methods=["POST"])
+@jwt_required()
+def add_note(object_type, object_id):
+    data = request.get_json()
+
+    # Basic table name validation (prevents SQL injection)
+    if not re.match(r"^[A-Za-z0-9_]+$", object_type):
+        return jsonify({"error": "Invalid table name"}), 400
+
+    # Make sure note text is provided
+    note_text = data.get("note_text", "").strip()
+    if not note_text:
+        return jsonify({"error": "Note text is required"}), 400
+
+    # Get identity from JWT
+    identity = get_jwt_identity()
+
+    # Default author
+    author = data.get("author")
+    if not author:
+        # Try to resolve username from the database
+        try:
+            user_id = int(get_jwt_identity())   # convert string ID to int
+            staff_user = Staff.query.get(user_id)
+            author = staff_user.username if staff_user else "Unknown User"
+        except (ValueError, TypeError):
+            author = "Unknown User"
+
+    # Create note
+    new_note = Note(
+        object_id=object_id,
+        object_type=object_type,
+        author=author,
+        note_text=note_text
+    )
+
+    db.session.add(new_note)
+    db.session.commit()
+
+    return jsonify({
+        "message": f"Note added to {object_type} entry {object_id} successfully.",
+        "author": author
+    }), 201
+
+
 #_____________________________________________________________________________________________________________________        
     
 #UPDATE ENTRY IN OutreachEvents TABLE    
@@ -737,8 +960,9 @@ def update_outreach_event(id):
 
     db.session.commit()
     
-    identity = get_jwt_identity()
-    user_id = identity
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
     
     log_change(
         instance=event,
@@ -746,6 +970,20 @@ def update_outreach_event(id):
         action="UPDATE",
         previous_instance=previous_snapshot  # use snapshot for previous_data
     )
+    
+    
+    # --- If the staff added a note, save it to the Notes table ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=event.id,
+            object_type="outreachevents",
+            author=username,
+            note_text=note_text.strip(),
+        )
+        db.session.add(new_note)
+        db.session.commit()
 
     return jsonify({
         "message": "Event updated successfully.",
@@ -783,8 +1021,9 @@ def update_seasonal_event(id):
 
     db.session.commit()
     
-    identity = get_jwt_identity()
-    user_id = identity
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
     
     log_change(
         instance=event,
@@ -792,6 +1031,20 @@ def update_seasonal_event(id):
         action="UPDATE",
         previous_instance=previous_snapshot  # use snapshot for previous_data
     )
+    
+    
+    # --- If the staff added a note, save it to the Notes table ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=event.id,
+            object_type="seasonalevents",
+            author=username,
+            note_text=note_text.strip(),
+        )
+        db.session.add(new_note)
+        db.session.commit()
 
     return jsonify({
         "message": "Event updated successfully.",
@@ -810,6 +1063,7 @@ def update_seasonal_event(id):
 
 #UPDATE ENTRY IN PotentialPartnerships TABLE  
 @app.route("/api/update_potential_partners/<int:id>", methods=["PUT"])
+@jwt_required()
 def update_partners(id):
     data = request.json
     partner = PotentialPartnerships.query.get(id)
@@ -828,8 +1082,9 @@ def update_partners(id):
 
     db.session.commit()
     
-    identity = get_jwt_identity()
-    user_id = identity
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
     
     log_change(
         instance=partner,
@@ -837,6 +1092,20 @@ def update_partners(id):
         action="UPDATE",
         previous_instance=previous_snapshot  # use snapshot for previous_data
     )
+    
+    
+    # --- If the staff added a note, save it to the Notes table ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=partner.id,
+            object_type="potentialpartnerships",
+            author=username,
+            note_text=note_text.strip(),
+        )
+        db.session.add(new_note)
+        db.session.commit()
 
     return jsonify({
         "message": "Partner updated successfully.",
@@ -855,6 +1124,7 @@ def update_partners(id):
     
 #UPDATE ENTRY IN NotPotentialPartnerships TABLE  
 @app.route("/api/update_not_potential_partners/<int:id>", methods=["PUT"])
+@jwt_required()
 def update_not_partners(id):
     data = request.json
     partner = NotPotentialPartnerships.query.get(id)
@@ -873,8 +1143,9 @@ def update_not_partners(id):
 
     db.session.commit()
     
-    identity = get_jwt_identity()
-    user_id = identity
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
     
     log_change(
         instance=partner,
@@ -882,6 +1153,20 @@ def update_not_partners(id):
         action="UPDATE",
         previous_instance=previous_snapshot  # use snapshot for previous_data
     )
+    
+    
+    # --- If the staff added a note, save it to the Notes table ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=partner.id,
+            object_type="notpotentialpartnerships",
+            author=username,
+            note_text=note_text.strip(),
+        )
+        db.session.add(new_note)
+        db.session.commit()
 
     return jsonify({
         "message": "Not Partner updated successfully.",
@@ -900,6 +1185,7 @@ def update_not_partners(id):
 
 # UPDATE ENTRY IN A COUNTY TABLE
 @app.route("/api/update_county_entry/<int:id>", methods=["PUT"])
+@jwt_required()
 def update_county_entry(id):
     data = request.json
     county_name = data.get("county_name")
@@ -942,8 +1228,9 @@ def update_county_entry(id):
 
     db.session.commit()
     
-    identity = get_jwt_identity()
-    user_id = identity
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
     
     log_change(
         instance=entry,
@@ -951,16 +1238,121 @@ def update_county_entry(id):
         action="UPDATE",
         previous_instance=previous_snapshot # use snapshot for previous_data
     )
+    
+    
+    # --- If the staff added a note, save it to the Notes table ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=entry.id,
+            object_type=table_name,
+            author=username,
+            note_text=note_text.strip(),
+        )
+        db.session.add(new_note)
+        db.session.commit()
 
     return jsonify({
         "message": f"Entry with ID {id} in '{county_name}' updated successfully.",
         "entry": {column.name: getattr(entry, column.name) for column in entry.__table__.columns}
     })
     
+    
+# UPDATE ENTRY IN SiteEvent TABLE (and create a user-added Note if provided)
+@app.route("/api/update_site_event/<int:id>", methods=["PUT"])
+@jwt_required()
+def update_site_event(id):
+    data = request.json
+    site_event = SiteEvent.query.get(id)
+    if not site_event:
+        return jsonify({"message": "Site event not found"}), 404
+
+    # Snapshot before update (for your changelog)
+    previous_snapshot = model_to_dict(site_event)
+
+    # --- Update the SiteEvent fields ---
+    site_event.site_name = data.get("site_name", site_event.site_name)
+    site_event.on_partnership_tracker = data.get(
+        "on_partnership_tracker", site_event.on_partnership_tracker
+    )
+    site_event.location_on_tracker = data.get(
+        "location_on_tracker", site_event.location_on_tracker
+    )
+    site_event.contact_name = data.get("contact_name", site_event.contact_name)
+    site_event.contact_method = data.get("contact_method", site_event.contact_method)
+    site_event.physical_address = data.get("physical_address", site_event.physical_address)
+    site_event.target_population = data.get("target_population", site_event.target_population)
+    site_event.offer_outreach_frequency = data.get(
+        "offer_outreach_frequency", site_event.offer_outreach_frequency
+    )
+    site_event.next_event_datetime = data.get(
+        "next_event_datetime", site_event.next_event_datetime
+    )
+    site_event.open_to_public = data.get("open_to_public", site_event.open_to_public)
+    site_event.site_type = data.get("site_type", site_event.site_type)
+
+    db.session.commit()
+
+    # --- Log the change (your existing audit trail) ---
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
+
+    log_change(
+        instance=site_event,
+        user_id=user_id,
+        action="UPDATE",
+        previous_instance=previous_snapshot
+    )
+
+    # --- If the staff added a note, save it to the Notes table ---
+    note_text = data.get("notes")
+    new_note = None
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=site_event.id,
+            object_type="siteevents",
+            author=username,
+            note_text=note_text.strip(),
+        )
+        db.session.add(new_note)
+        db.session.commit()
+
+    # --- Response ---
+    response = {
+        "message": "Site event updated successfully.",
+        "site_event": {
+            "id": site_event.id,
+            "site_name": site_event.site_name,
+            "on_partnership_tracker": site_event.on_partnership_tracker,
+            "location_on_tracker": site_event.location_on_tracker,
+            "contact_name": site_event.contact_name,
+            "contact_method": site_event.contact_method,
+            "physical_address": site_event.physical_address,
+            "target_population": site_event.target_population,
+            "offer_outreach_frequency": site_event.offer_outreach_frequency,
+            "next_event_datetime": site_event.next_event_datetime,
+            "open_to_public": site_event.open_to_public,
+            "site_type": site_event.site_type
+        }
+    }
+
+    if new_note:
+        response["note"] = {
+            "id": new_note.id,
+            "author": new_note.author,
+            "note_text": new_note.note_text,
+            "created_at": new_note.created_at
+        }
+
+    return jsonify(response)
+
 #___________________________________________________________________________________________________________________
 
-#GENERALIZED DELETE ENTRY FUNCTION
+# GENERALIZED DELETE ENTRY FUNCTION (with related notes deletion)
 @app.route('/api/delete_entry', methods=['DELETE'])
+@jwt_required()
 def delete_entry():
     data = request.get_json()
     table_name = data.get('table')
@@ -973,38 +1365,97 @@ def delete_entry():
         'potentialpartnerships': PotentialPartnerships,
         'notpotentialpartnerships': NotPotentialPartnerships,
         'monthlyupdates': MonthlyUpdates,
+        'siteevents': SiteEvent,  # optional: include if you'd like it handled here too
     }
 
     model = model_map.get(table_name.lower())
     if not model:
         return jsonify({'error': 'Invalid table name'}), 400
 
+    # Get entry from database
     entry = db.session.get(model, entry_id)
     if not entry:
         return jsonify({'error': 'Entry not found'}), 404
-    
-    previous_snapshot = model_to_dict(entry)
-    
-    identity = get_jwt_identity()
-    user_id = identity
 
-    # Log BEFORE deleting (so we still have the instance)
+    # Snapshot before deletion for logging
+    previous_snapshot = model_to_dict(entry)
+
+    user_id = int(get_jwt_identity())
+
+    # Log deletion BEFORE removing
     log_change(
-        instance=entry,          # pass the actual entry
-        user_id=user_id,               # replace with current logged-in user ID
+        instance=entry,
+        user_id=user_id,
         action="DELETE",
         previous_instance=previous_snapshot
     )
 
+    # Delete associated notes (if any)
+    associated_notes = Note.query.filter_by(
+        object_type=table_name.lower(),
+        object_id=entry_id
+    ).all()
+    deleted_notes_count = len(associated_notes)
+    for note in associated_notes:
+        db.session.delete(note)
+
+    # Delete the main entry
     db.session.delete(entry)
     db.session.commit()
+
+    return jsonify({
+        'message': f'Entry and {deleted_notes_count} associated notes deleted successfully',
+        'deleted_entry_id': entry_id,
+        'deleted_notes_count': deleted_notes_count
+    }), 200
+
+
+
+# DELETE ENTRY IN SiteEvent TABLE
+@app.route("/api/delete_site_event/<int:id>", methods=["DELETE"])
+@jwt_required()
+def delete_site_event(id):
+    site_event = SiteEvent.query.get(id)
+    if not site_event:
+        return jsonify({"message": "Site event not found"}), 404
+
+    # Take snapshot before deletion (for audit log)
+    previous_snapshot = model_to_dict(site_event)
+
+    # Delete all notes associated with this SiteEvent
+    associated_notes = Note.query.filter_by(
+        object_type="siteevents",
+        object_id=id
+    ).all()
+    for note in associated_notes:
+        db.session.delete(note)
+
+    # Delete the site event itself
+    db.session.delete(site_event)
+    db.session.commit()
+
+    # Log deletion
+    user_id = int(get_jwt_identity())   # convert string ID to int
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
+
+    log_change(
+        instance=site_event,
+        user_id=user_id,
+        action="DELETE",
+        previous_instance=previous_snapshot
+    )
+
+    return jsonify({
+        "message": "Site event and all associated notes deleted successfully.",
+        "deleted_site_event_id": id,
+        "deleted_notes_count": len(associated_notes)
+    })
     
-
-    return jsonify({'message': 'Entry deleted'}), 200
-
 
 # DELETE ENTRY IN A COUNTY TABLE
 @app.route("/api/delete_county_entry/<int:id>", methods=["DELETE"])
+@jwt_required()
 def delete_county_entry(id):
     data = request.json
     county_name = data.get("county_name")
@@ -1032,7 +1483,7 @@ def delete_county_entry(id):
     previous_snapshot = model_to_dict(entry)
     
     identity = get_jwt_identity()
-    user_id = identity
+    user_id = identity["id"]
 
     # Log BEFORE deleting (so we still have the instance)
     log_change(
@@ -1050,5 +1501,7 @@ def delete_county_entry(id):
     })
 
 
+
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
+
