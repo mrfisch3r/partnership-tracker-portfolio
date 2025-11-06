@@ -3,6 +3,7 @@ from flask_cors import CORS
 from models import *
 from functions import *
 import os
+import re
 from functools import wraps
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required
 
@@ -91,15 +92,37 @@ def login():
 
     return jsonify({"access_token": access_token}), 200
 
+# Answer CORS preflight for verify-token without requiring a JWT
+@app.route("/api/verify-token", methods=["OPTIONS"])
+def verify_token_options():
+    return ('', 200)
 
+
+@app.route("/api/verify-token", methods=["GET"])
+@jwt_required()
+def verify_token():
+    """
+    Simple endpoint used by the frontend to validate an access token.
+    Returns 200 + {"valid": True} when the Authorization Bearer token is valid.
+    """
+    return jsonify({"valid": True}), 200
 
 def role_required(required_role):
+    """Decorator to require a specific role stored in JWT additional claims.
+
+    Reads the role from JWT claims.
+    Returns 403 if the role does not match.
+    """
     def wrapper(fn):
         @wraps(fn)
         @jwt_required()
         def decorated(*args, **kwargs):
-            identity = get_jwt_identity()
-            if identity["role"] != required_role:
+            #get_jwt_identity returns the identity (string id). Role is stored
+            #in additional claims; fetch it from get_jwt().
+            from flask_jwt_extended import get_jwt
+            claims = get_jwt()
+            role = claims.get("role")
+            if role != required_role:
                 return jsonify({"error": "Insufficient permissions"}), 403
             return fn(*args, **kwargs)
         return decorated
