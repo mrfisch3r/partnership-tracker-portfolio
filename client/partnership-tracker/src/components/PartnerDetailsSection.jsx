@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NotesModal from './NotesModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
@@ -10,6 +10,23 @@ const PartnershipDetails = ({ partner, onClose, onComments, onPartnerUpdated, on
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [showContactHistory, setShowContactHistory] = useState(false);
+  const [targetPopulations, setTargetPopulations] = useState([]);
+
+  useEffect(() => {
+    // Fetch target populations on component mount
+    const fetchTargetPopulations = async () => {
+      try {
+        const res = await fetch("http://localhost:5001/api/target_populations");
+        if (res.ok) {
+          const data = await res.json();
+          setTargetPopulations(data.target_populations || []);
+        }
+      } catch (err) {
+        console.error("Error fetching target populations:", err);
+      }
+    };
+    fetchTargetPopulations();
+  }, []);
   
   // Format contact information for better readability
   const formatContacts = (contacts) => {
@@ -201,13 +218,20 @@ const PartnershipDetails = ({ partner, onClose, onComments, onPartnerUpdated, on
           
           <div className="detail-row">
             <label htmlFor="edit-target-population">Target Population:</label>
-            <textarea
+            <select
               id="edit-target-population"
               name="target_population"
               value={editFormData.target_population || ''}
               onChange={handleChange}
-              rows={3}
-            />
+              required
+            >
+              <option value="">Select target population...</option>
+              {targetPopulations.map((pop) => (
+                <option key={pop.id} value={pop.name}>
+                  {pop.name}
+                </option>
+              ))}
+            </select>
           </div>
           
           <div className="detail-row">

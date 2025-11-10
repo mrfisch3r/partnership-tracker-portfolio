@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const AddOutreachEventForm = ({ onEventAdded }) => {
   // State for form data - matches database schema
@@ -15,6 +15,23 @@ const AddOutreachEventForm = ({ onEventAdded }) => {
   // State for displaying success/error messages
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [targetPopulations, setTargetPopulations] = useState([]);
+
+  useEffect(() => {
+    // Fetch target populations on component mount
+    const fetchTargetPopulations = async () => {
+      try {
+        const res = await fetch("http://localhost:5001/api/target_populations");
+        if (res.ok) {
+          const data = await res.json();
+          setTargetPopulations(data.target_populations || []);
+        }
+      } catch (err) {
+        console.error("Error fetching target populations:", err);
+      }
+    };
+    fetchTargetPopulations();
+  }, []);
 
   // Handle changes to any form field
   const handleChange = (e) => {
@@ -155,19 +172,25 @@ const AddOutreachEventForm = ({ onEventAdded }) => {
           </small>
         </div>
 
-        {/* Target population textarea */}
+        {/* Target population select */}
         <div>
           <label htmlFor="target_population">Target Population:</label>
-          <textarea
+          <select
             id="target_population"
             name="target_population"
             value={formData.target_population}
             onChange={handleChange}
-            placeholder={examples.target_population}
-            rows={3}
-          />
+            required
+          >
+            <option value="">Select target population...</option>
+            {targetPopulations.map((pop) => (
+              <option key={pop.id} value={pop.name}>
+                {pop.name}
+              </option>
+            ))}
+          </select>
           <small className="field-hint">
-            Describe who this event/outreach serves
+            Select the primary population served
           </small>
         </div>
 

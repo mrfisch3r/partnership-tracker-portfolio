@@ -45,7 +45,15 @@ const OutreachEventsTable = ({
           .includes(filters.organization.toLowerCase())
       : true;
 
-    return byOrganization;
+    // Filter by target populations (if any selected)
+    const byTargetPopulation =
+      filters.targetPopulations && filters.targetPopulations.length > 0
+        ? filters.targetPopulations.some((pop) =>
+            event.target_population?.toLowerCase().includes(pop.toLowerCase())
+          )
+        : true;
+
+    return byOrganization && byTargetPopulation;
   });
 
   // Extract the most recent date from a compound date string

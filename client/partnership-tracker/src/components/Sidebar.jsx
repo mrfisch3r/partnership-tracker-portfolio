@@ -1,30 +1,55 @@
-import React, { useState } from 'react';
-import html2pdf from 'html2pdf.js';
+import React, { useState, useEffect } from "react";
+import html2pdf from "html2pdf.js";
 
 const Sidebar = ({ onFilterChange }) => {
-  const [organization, setOrganization] = useState('');
-  const [targetPopulation, setTargetPopulation] = useState('');
-  const [dateRange, setDateRange] = useState('all');
+  const [organization, setOrganization] = useState("");
+  const [targetPopulations, setTargetPopulations] = useState([]);
+  const [selectedPopulations, setSelectedPopulations] = useState([]);
+  const [dateRange, setDateRange] = useState("all");
+  const [showPopulationDropdown, setShowPopulationDropdown] = useState(false);
+
+  // Fetch target populations on component mount
+  useEffect(() => {
+    const fetchTargetPopulations = async () => {
+      try {
+        const res = await fetch("http://localhost:5001/api/target_populations");
+        if (res.ok) {
+          const data = await res.json();
+          setTargetPopulations(data.target_populations || []);
+        }
+      } catch (err) {
+        console.error("Error fetching target populations:", err);
+      }
+    };
+    fetchTargetPopulations();
+  }, []);
 
   // Update organization filter and notify parent component
   const handleOrganizationChange = (e) => {
     const newOrganization = e.target.value;
     setOrganization(newOrganization);
-    onFilterChange({ 
-      organization: newOrganization, 
-      targetPopulation, 
-      dateRange 
+    onFilterChange({
+      organization: newOrganization,
+      targetPopulations: selectedPopulations,
+      dateRange,
     });
   };
 
-  // Update target population filter
-  const handleTargetPopulationChange = (e) => {
-    const newTargetPopulation = e.target.value;
-    setTargetPopulation(newTargetPopulation);
-    onFilterChange({ 
-      organization, 
-      targetPopulation: newTargetPopulation, 
-      dateRange 
+  // Handle checkbox toggle for target populations
+  const handlePopulationToggle = (populationName) => {
+    let updatedSelections;
+    if (selectedPopulations.includes(populationName)) {
+      updatedSelections = selectedPopulations.filter(
+        (p) => p !== populationName
+      );
+    } else {
+      updatedSelections = [...selectedPopulations, populationName];
+    }
+    setSelectedPopulations(updatedSelections);
+    onFilterChange({
+      organization,
+      targetPopulations: updatedSelections,
+      dateRange,
     });
   };
 
@@ -32,10 +57,10 @@ const Sidebar = ({ onFilterChange }) => {
   const handleDateRangeChange = (e) => {
     const newDateRange = e.target.value;
     setDateRange(newDateRange);
-    onFilterChange({ 
-      organization, 
-      targetPopulation, 
-      dateRange: newDateRange 
+    onFilterChange({
+      organization,
+      targetPopulations: selectedPopulations,
+      dateRange: newDateRange,
     });
   };
 
@@ -44,34 +69,36 @@ const Sidebar = ({ onFilterChange }) => {
     window.print();
   };
 
-  // Handle export to PDF 
+  // Handle export to PDF
   const handleExportPDF = () => {
     // Get the main table content
-    const contentElement = document.querySelector('.partnership-table');
-    
+    const contentElement = document.querySelector(".partnership-table");
+
     if (!contentElement) {
-      alert('No content found to export. Please ensure you are viewing a table.');
+      alert(
+        "No content found to export. Please ensure you are viewing a table."
+      );
       return;
     }
-    
+
     // Create a clone of the element to avoid modifying the original
     const clonedContent = contentElement.cloneNode(true);
-    
+
     // Remove any instruction text from the clone
-    const instructions = clonedContent.querySelector('.table-instructions');
+    const instructions = clonedContent.querySelector(".table-instructions");
     if (instructions) {
       instructions.remove();
     }
-    
+
     // Set PDF generation options
     const options = {
       margin: 10,
-      filename: 'partnership-data-export.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
+      filename: "partnership-data-export.pdf",
+      image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
     };
-    
+
     // Generate PDF
     html2pdf().from(clonedContent).set(options).save();
   };
@@ -79,7 +106,7 @@ const Sidebar = ({ onFilterChange }) => {
   return (
     <aside className="sidebar">
       <h2>Filters</h2>
-      
+
       <div className="filter-section">
         <label htmlFor="organization-filter">Organization:</label>
         <input
@@ -90,30 +117,55 @@ const Sidebar = ({ onFilterChange }) => {
           placeholder="Type to filter by organization"
         />
       </div>
-      
+
       <div className="filter-section">
-        <label htmlFor="population-filter">Target Population:</label>
-        <select 
-          id="population-filter" 
-          value={targetPopulation} 
-          onChange={handleTargetPopulationChange}
-        >
-          <option value="">All Populations</option>
-          <option value="unhoused">Unhoused</option>
-          <option value="youth">Youth</option>
-          <option value="seniors">Seniors</option>
-          <option value="lgbtq">LGBTQ+</option>
-          <option value="substance">Substance Use</option>
-          <option value="mental">Mental Health</option>
-          <option value="families">Families</option>
-        </select>
+        <label>Target Population:</label>
+        <div className="population-filter-container">
+          <button
+            className="population-filter-toggle"
+            onClick={() => setShowPopulationDropdown(!showPopulationDropdown)}
+            type="button"
+          >
+            {selectedPopulations.length === 0
+              ? "All Populations"
+              : `${selectedPopulations.length} selected`}
+            <span
+              className={`dropdown-arrow ${
+                showPopulationDropdown ? "open" : ""
+              }`}
+            >
+              ▼
+            </span>
+          </button>
+          {showPopulationDropdown && (
+            <div className="population-checklist">
+              {targetPopulations.length === 0 ? (
+                <div className="population-empty">
+                  No target populations configured. Admins can add them in the
+                  Admin panel.
+                </div>
+              ) : (
+                targetPopulations.map((pop) => (
+                  <label key={pop.id} className="population-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={selectedPopulations.includes(pop.name)}
+                      onChange={() => handlePopulationToggle(pop.name)}
+                    />
+                    <span>{pop.name}</span>
+                  </label>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </div>
-      
+
       <div className="filter-section">
         <label htmlFor="date-range">Contact Date:</label>
-        <select 
-          id="date-range" 
-          value={dateRange} 
+        <select
+          id="date-range"
+          value={dateRange}
           onChange={handleDateRangeChange}
         >
           <option value="all">All Time</option>
@@ -123,7 +175,7 @@ const Sidebar = ({ onFilterChange }) => {
           <option value="last365">Last Year</option>
         </select>
       </div>
-      
+
       <div className="sidebar-actions">
         <button onClick={handlePrint} className="sidebar-button">
           Print View
@@ -132,7 +184,7 @@ const Sidebar = ({ onFilterChange }) => {
           Export to PDF
         </button>
       </div>
-      
+
       <div className="sidebar-help">
         <h3>Quick Help</h3>
         <p>Click on any row to view details.</p>

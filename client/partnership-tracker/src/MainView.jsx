@@ -17,12 +17,16 @@ import AddOutreachEventForm from "./components/AddOutreachEventForm";
 import AddSeasonalEventForm from "./components/AddSeasonalEventForm";
 import AddNotPartnershipForm from "./components/AddNotPartnershipForm";
 import AddMonthlyUpdateForm from "./components/AddMonthlyUpdateForm";
-import UserManagement from "./components/UserManagement";
+import Admin from "./components/Admin";
 import "./MainView.css";
 
 export function MainView() {
   // state for filter criteria
-  const [filters, setFilters] = useState({ organization: "", county: "" });
+  const [filters, setFilters] = useState({
+    organization: "",
+    targetPopulations: [],
+    dateRange: "all",
+  });
 
   // state for selected item from the table
   const [selectedItem, setSelectedItem] = useState(null);
@@ -204,8 +208,8 @@ export function MainView() {
           onAdd={() => setActiveAction("add")}
         />
       );
-    } else if (activeView === "userManagement") {
-      return <UserManagement />;
+    } else if (activeView === "admin") {
+      return <Admin />;
     }
   };
 
@@ -325,13 +329,13 @@ export function MainView() {
         {(user.role === "admin" || user.role === "owner") && (
           <button
             onClick={() => {
-              setActiveView("userManagement");
+              setActiveView("admin");
               setActiveAction("view");
               setSelectedItem(null);
             }}
-            className={activeView === "userManagement" ? "active" : ""}
+            className={activeView === "admin" ? "active" : ""}
           >
-            User Management
+            Admin
           </button>
         )}
         <div style={{ flex: 1 }} />
