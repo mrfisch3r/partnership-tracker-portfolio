@@ -17,6 +17,7 @@ import AddOutreachEventForm from "./components/AddOutreachEventForm";
 import AddSeasonalEventForm from "./components/AddSeasonalEventForm";
 import AddNotPartnershipForm from "./components/AddNotPartnershipForm";
 import AddMonthlyUpdateForm from "./components/AddMonthlyUpdateForm";
+import UserManagement from "./components/UserManagement";
 import "./MainView.css";
 
 export function MainView() {
@@ -26,8 +27,8 @@ export function MainView() {
   // state for selected item from the table
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // state for username
-  const [username, setUsername] = useState("User");
+  // state for user info
+  const [user, setUser] = useState({ username: "User", role: "user" });
 
   // toggle to show comments vs. details
   const [showComments, setShowComments] = useState(false);
@@ -41,19 +42,19 @@ export function MainView() {
   // state to force table refreshes after item deletion
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Decode JWT to get username
+  // Decode JWT to get user info
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
-        console.log("JWT Payload:", payload); // Debug log
-        // Username should be at the top level of the payload (from additional_claims)
-        const username = payload.username || payload.role || "User";
-        setUsername(username);
+        setUser({
+          id: payload.sub, // 'sub' is the standard JWT claim for identity
+          username: payload.username || "User",
+          role: payload.role || "user",
+        });
       } catch (error) {
-        console.error("JWT Decode Error:", error);
-        setUsername("User");
+        console.error("Error decoding JWT:", error);
       }
     }
   }, []);
@@ -164,6 +165,7 @@ export function MainView() {
           filters={filters}
           onPartnerSelect={handleItemSelect}
           refreshTrigger={refreshTrigger}
+          onAdd={() => setActiveAction("add")}
         />
       );
     } else if (activeView === "outreach") {
@@ -172,6 +174,7 @@ export function MainView() {
           filters={filters}
           onEventSelect={handleItemSelect}
           refreshTrigger={refreshTrigger}
+          onAdd={() => setActiveAction("add")}
         />
       );
     } else if (activeView === "seasonal") {
@@ -180,6 +183,7 @@ export function MainView() {
           filters={filters}
           onEventSelect={handleItemSelect}
           refreshTrigger={refreshTrigger}
+          onAdd={() => setActiveAction("add")}
         />
       );
     } else if (activeView === "notPartnerships") {
@@ -188,6 +192,7 @@ export function MainView() {
           filters={filters}
           onPartnerSelect={handleItemSelect}
           refreshTrigger={refreshTrigger}
+          onAdd={() => setActiveAction("add")}
         />
       );
     } else if (activeView === "monthlyUpdates") {
@@ -196,8 +201,11 @@ export function MainView() {
           filters={filters}
           onUpdateSelect={handleItemSelect}
           refreshTrigger={refreshTrigger}
+          onAdd={() => setActiveAction("add")}
         />
       );
+    } else if (activeView === "userManagement") {
+      return <UserManagement />;
     }
   };
 
@@ -314,17 +322,29 @@ export function MainView() {
         >
           Monthly Updates
         </button>
-        <button
-          onClick={() => {
-            setActiveAction("add");
-            setSelectedItem(null);
+        {(user.role === "admin" || user.role === "owner") && (
+          <button
+            onClick={() => {
+              setActiveView("userManagement");
+              setActiveAction("view");
+              setSelectedItem(null);
+            }}
+            className={activeView === "userManagement" ? "active" : ""}
+          >
+            User Management
+          </button>
+        )}
+        <div style={{ flex: 1 }} />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "1rem",
           }}
-          className={activeAction === "add" ? "active" : ""}
         >
-          Add New {getActiveViewLabel()}
-        </button>
-        <div style={{ marginLeft: "auto" }}>
-          <p1 style={{ marginRight: "8px" }}>{username}</p1>
+          <span style={{ color: "#666", fontSize: "0.9rem" }}>
+            Welcome, <strong>{user.username}</strong> ({user.role})
+          </span>
           <button
             className="red-button"
             style={{}}

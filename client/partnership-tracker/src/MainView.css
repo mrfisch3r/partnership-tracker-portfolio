@@ -130,6 +130,23 @@ body {
   border-radius: 4px;
   font-size: 0.9rem;
   background-color: white;
+  color: #333;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-section select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.filter-section select option {
+  background-color: white;
+  color: #333;
+  padding: 8px;
 }
 
 .filter-section input:focus,
@@ -502,6 +519,8 @@ button {
   border-bottom: 1px solid #eee;
   display: flex;
   gap: 1rem; /* Space between buttons */
+  flex-wrap: wrap; /* Allow wrapping to multiple rows if needed */
+  align-items: center;
 }
 
 /* Individual Navigation Button Styling */
@@ -513,6 +532,8 @@ button {
   cursor: pointer;
   margin: 0;
   transition: all 0.2s ease; /* Smooth hover/active transitions */
+  white-space: nowrap; /* Prevent text wrapping inside buttons */
+  flex-shrink: 0; /* Prevent buttons from shrinking */
 }
 
 /* Hover effect for navigation buttons */
@@ -536,7 +557,8 @@ button {
   padding: 6px 12px;
   cursor: pointer;
   font-size: 0.9rem;
-  margin-left: 10px;
+  margin: 0 auto;
+  display: inline-block;
 }
 
 .view-notes-button:hover {
@@ -918,6 +940,12 @@ button.red-button:hover {
 .partnership-table table td:last-child {
   width: 80px;
   text-align: center;
+  overflow: visible !important;
+}
+
+/* Prevent notes column from getting overflow behavior on hover */
+.partnership-table table td:last-child:hover {
+  overflow: visible !important;
 }
 
 /* DELETE BUTTON STYLES */
@@ -1216,4 +1244,344 @@ table {
   .partnership-table {
     page-break-after: always;
   }
+}
+
+/* NOTES TABLE MODAL STYLES */
+.add-note-form {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
+
+.add-note-form .form-group {
+  margin-bottom: 10px;
+}
+
+.add-note-form label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.add-note-form input,
+.add-note-form textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+  color: #333;
+}
+
+.add-note-form textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.notes-list h4 {
+  margin-top: 20px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.notes-timeline {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.note-item {
+  padding: 12px;
+  margin-bottom: 12px;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+}
+
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.note-timestamps {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.note-date {
+  font-size: 12px;
+  color: #666;
+}
+
+.note-edited {
+  font-style: italic;
+  color: #888;
+}
+
+.note-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #333;
+  line-height: 1.5;
+}
+
+.no-notes {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 20px;
+}
+
+.note-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.edit-note-button,
+.delete-note-button {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.edit-note-button {
+  background-color: #2196f3;
+  color: white;
+}
+
+.edit-note-button:hover {
+  background-color: #0b7dda;
+}
+
+.delete-note-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.delete-note-button:hover {
+  background-color: #d32f2f;
+}
+
+.edit-note-section {
+  margin-top: 8px;
+}
+
+.edit-note-textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 8px;
+  background-color: white;
+  color: #333;
+}
+
+.edit-note-textarea:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.edit-note-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* USER MANAGEMENT STYLES */
+.user-management {
+  padding-top: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.user-management h2 {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.management-description {
+  color: #666;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+.users-table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.users-table thead {
+  background-color: #f5f5f5;
+}
+
+.users-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.users-table th:first-child {
+  border-top-left-radius: 8px;
+}
+
+.users-table th:last-child {
+  border-top-right-radius: 8px;
+}
+
+.users-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.users-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.users-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 8px;
+}
+
+.users-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 8px;
+}
+
+.users-table tbody tr:hover {
+  background-color: #fafafa;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.role-owner {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.role-admin {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.role-user {
+  background-color: #e8f5e9;
+  color: #388e3c;
+}
+
+.role-select {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+  font-size: 0.9rem;
+  cursor: pointer;
+  min-width: 120px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 32px;
+}
+
+.role-select:hover {
+  border-color: #2196f3;
+}
+
+.role-select:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.role-select option {
+  background-color: white;
+  color: #333;
+  padding: 8px;
+}
+
+.delete-user-button {
+  padding: 6px 16px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.delete-user-button:hover {
+  background-color: #d32f2f;
+}
+
+.delete-user-button:active {
+  background-color: #b71c1c;
+}
+
+.role-descriptions {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #2196f3;
+}
+
+.role-descriptions h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.role-description-item {
+  margin-bottom: 0.75rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.role-description-item:last-child {
+  margin-bottom: 0;
+}
+
+.current-user-badge {
+  color: #2196f3;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.role-locked {
+  color: #999;
+  font-size: 0.9rem;
+  font-style: italic;
 }

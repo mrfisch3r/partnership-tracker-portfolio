@@ -4,6 +4,7 @@ const NotPartnershipsTable = ({
   filters,
   onPartnerSelect,
   refreshTrigger = 0,
+  onAdd,
 }) => {
   const [partners, setPartners] = useState([]);
   const [sortOrder, setSortOrder] = useState("desc");
@@ -86,6 +87,15 @@ const NotPartnershipsTable = ({
           Sort by Contact Date (
           {sortOrder === "desc" ? "Newest First" : "Oldest First"})
         </button>
+        {onAdd && (
+          <button
+            className="blue-button"
+            onClick={onAdd}
+            style={{ marginLeft: "1rem" }}
+          >
+            + Add New Entry
+          </button>
+        )}
       </div>
 
       <div className="table-instructions">

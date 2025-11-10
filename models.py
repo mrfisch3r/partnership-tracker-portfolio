@@ -97,7 +97,7 @@ class Staff(db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)  # should be a string, not integer
-    role = db.Column(db.String(50), nullable=False, default="viewer")  # enforce role size + sensible default
+    role = db.Column(db.String(50), nullable=False, default="user")  # enforce role size + sensible default
     
     # Hash password before storing
     def set_password(self, password):
@@ -133,6 +133,7 @@ class Note(db.Model):
     author = db.Column(db.Text(100), nullable=False)
     note_text = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.now())
+    updated_at = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
 
 #class ContactInfo(db.Model):
     #SEPERATE TABLES FOR CONTACT INFO IN CASE THERE ARE MULTIPLE CONTACTS FOR ONE ENTRY, MAY NOT BE NECESSARY

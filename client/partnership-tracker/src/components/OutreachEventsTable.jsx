@@ -4,6 +4,7 @@ const OutreachEventsTable = ({
   filters,
   onEventSelect,
   refreshTrigger = 0,
+  onAdd,
 }) => {
   // State for storing events data and sort order
   const [events, setEvents] = useState([]);
@@ -112,6 +113,15 @@ const OutreachEventsTable = ({
           Sort by Date ({sortOrder === "desc" ? "Newest First" : "Oldest First"}
           )
         </button>
+        {onAdd && (
+          <button
+            className="blue-button"
+            onClick={onAdd}
+            style={{ marginLeft: "1rem" }}
+          >
+            + Add New Entry
+          </button>
+        )}
       </div>
 
       <div className="table-instructions">

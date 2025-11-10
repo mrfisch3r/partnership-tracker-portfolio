@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
+import NotesTableModal from "./NotesTableModal";
 
 const PotentialPartnershipsTable = ({
   filters,
   onPartnerSelect,
   refreshTrigger = 0,
+  onAdd,
 }) => {
   const [partners, setPartners] = useState([]);
   const [sortOrder, setSortOrder] = useState("desc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notesModalOpen, setNotesModalOpen] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState(null);
   const tableRef = useRef(null);
 
   // Fetch partners data when component mounts or refreshTrigger changes
@@ -98,6 +102,15 @@ const PotentialPartnershipsTable = ({
           Sort by Contact Date (
           {sortOrder === "desc" ? "Newest First" : "Oldest First"})
         </button>
+        {onAdd && (
+          <button
+            className="blue-button"
+            onClick={onAdd}
+            style={{ marginLeft: "1rem" }}
+          >
+            + Add New Entry
+          </button>
+        )}
       </div>
 
       <div className="table-instructions">
@@ -121,7 +134,7 @@ const PotentialPartnershipsTable = ({
               <th>Target Population</th>
               <th>Most Recent Contact</th>
               <th>Next Contact Plan</th>
-              <th>Has Notes</th>
+              <th>Notes</th>
             </tr>
           </thead>
           <tbody>
@@ -140,12 +153,20 @@ const PotentialPartnershipsTable = ({
                   <td>{partner.target_population}</td>
                   <td>{recentDate || "N/A"}</td>
                   <td>{partner.next_contact}</td>
-                  <td>
-                    {partner.notes && partner.notes.trim() ? (
-                      <span className="notes-indicator">Yes</span>
-                    ) : (
-                      "No"
-                    )}
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className="view-notes-button"
+                      onClick={() => {
+                        setSelectedPartner({
+                          id: partner.id,
+                          name: partner.organization_name || partner.name,
+                          type: "potentialpartnerships",
+                        });
+                        setNotesModalOpen(true);
+                      }}
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               );
@@ -153,6 +174,14 @@ const PotentialPartnershipsTable = ({
           </tbody>
         </table>
       )}
+
+      <NotesTableModal
+        isOpen={notesModalOpen}
+        onClose={() => setNotesModalOpen(false)}
+        objectType={selectedPartner?.type}
+        objectId={selectedPartner?.id}
+        objectName={selectedPartner?.name}
+      />
     </div>
   );
 };

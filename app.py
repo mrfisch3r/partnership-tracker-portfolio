@@ -42,11 +42,16 @@ with app.app_context():
     db.create_all()
     admin = Staff.query.filter_by(username="admin").first()
     if not admin:
-        admin = Staff(username="admin", email="admin@ukhc.com", role="admin")
+        admin = Staff(username="admin", email="admin@ukhc.com", role="owner")
         admin.set_password("admin123")
         db.session.add(admin)
         db.session.commit()
-        print("Default admin account created!")
+        print("Default owner account created!")
+    elif admin.role == "admin":
+        # Upgrade existing admin to owner
+        admin.role = "owner"
+        db.session.commit()
+        print("Upgraded admin to owner role!")
     
     
 #_______________________________________________________________________________________________________________________________
@@ -59,7 +64,7 @@ def register():
     username = data.get("username")
     email = data.get("email")
     password = data.get("password")
-    role = data.get("role", "viewer")
+    role = data.get("role", "user")
 
     if Staff.query.filter((Staff.username == username) | (Staff.email == email)).first():
         return jsonify({"error": "Username or email already exists"}), 400
@@ -84,10 +89,10 @@ def login():
     if not staff or not staff.check_password(password):
         return jsonify({"error": "Invalid username or password"}), 401
 
-    # Create JWT with staff.id as string identity, role in additional claims
+    # Create JWT with staff.id as string identity, role and username in additional claims
     access_token = create_access_token(
         identity=str(staff.id),  # must be string
-        additional_claims={"role": staff.role}
+        additional_claims={"role": staff.role, "username": staff.username}
     )
 
     return jsonify({"access_token": access_token}), 200
@@ -106,6 +111,134 @@ def verify_token():
     Returns 200 + {"valid": True} when the Authorization Bearer token is valid.
     """
     return jsonify({"valid": True}), 200
+
+
+# GET CURRENT USER INFO
+@app.route("/api/current_user", methods=["GET"])
+@jwt_required()
+def get_current_user():
+    try:
+        user_id = int(get_jwt_identity())
+        user = Staff.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        return jsonify({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role
+        }), 200
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid user"}), 401
+
+
+# GET ALL USERS (Admin only)
+@app.route("/api/users", methods=["GET"])
+@jwt_required()
+def get_all_users():
+    try:
+        user_id = int(get_jwt_identity())
+        current_user = Staff.query.get(user_id)
+        
+        if not current_user or current_user.role not in ["admin", "owner"]:
+            return jsonify({"error": "Admin access required"}), 403
+        
+        users = Staff.query.all()
+        return jsonify([
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role
+            } for user in users
+        ]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# UPDATE USER ROLE (Admin only)
+@app.route("/api/users/<int:user_id>/role", methods=["PUT"])
+@jwt_required()
+def update_user_role(user_id):
+    try:
+        current_user_id = int(get_jwt_identity())
+        current_user = Staff.query.get(current_user_id)
+        
+        if not current_user or current_user.role not in ["admin", "owner"]:
+            return jsonify({"error": "Admin access required"}), 403
+        
+        target_user = Staff.query.get(user_id)
+        if not target_user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Prevent users from changing their own role
+        if current_user_id == user_id:
+            return jsonify({"error": "You cannot change your own role"}), 403
+        
+        data = request.get_json()
+        new_role = data.get("role")
+        
+        if new_role not in ["admin", "user"]:
+            return jsonify({"error": "Invalid role. Must be admin or user"}), 400
+        
+        # Prevent changing owner role
+        if target_user.role == "owner":
+            return jsonify({"error": "Cannot change owner role"}), 403
+        
+        target_user.role = new_role
+        db.session.commit()
+        
+        return jsonify({
+            "message": f"User role updated to {new_role}",
+            "user": {
+                "id": target_user.id,
+                "username": target_user.username,
+                "email": target_user.email,
+                "role": target_user.role
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# DELETE A USER (Admin/Owner only)
+@app.route("/api/users/<int:user_id>", methods=["DELETE"])
+@jwt_required()
+def delete_user(user_id):
+    try:
+        # Get current user info
+        current_user_id = int(get_jwt_identity())
+        current_user = Staff.query.get(current_user_id)
+        
+        if not current_user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Check if current user is admin or owner
+        if current_user.role not in ["admin", "owner"]:
+            return jsonify({"error": "Unauthorized. Admin or Owner role required"}), 403
+        
+        # Get target user
+        target_user = Staff.query.get(user_id)
+        if not target_user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Prevent users from deleting themselves
+        if current_user_id == user_id:
+            return jsonify({"error": "You cannot delete yourself"}), 403
+        
+        # Prevent deleting owner accounts
+        if target_user.role == "owner":
+            return jsonify({"error": "Cannot delete owner accounts"}), 403
+        
+        # Delete the user
+        db.session.delete(target_user)
+        db.session.commit()
+        
+        return jsonify({"message": f"User {target_user.username} deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 def role_required(required_role):
     """Decorator to require a specific role stored in JWT additional claims.
@@ -325,7 +458,8 @@ def get_notes(object_type, object_id):
             "id": n.id,
             "author": n.author,
             "note_text": n.note_text,
-            "created_at": n.created_at.isoformat()
+            "created_at": n.created_at.isoformat(),
+            "updated_at": n.updated_at.isoformat() if n.updated_at else n.created_at.isoformat()
         } for n in notes
     ])
     
@@ -958,6 +1092,77 @@ def add_note(object_type, object_id):
         "message": f"Note added to {object_type} entry {object_id} successfully.",
         "author": author
     }), 201
+
+
+# UPDATE A SPECIFIC NOTE
+@app.route("/api/update_note/<int:note_id>", methods=["PUT"])
+@jwt_required()
+def update_note(note_id):
+    data = request.get_json()
+    
+    note = Note.query.get(note_id)
+    if not note:
+        return jsonify({"error": "Note not found"}), 404
+    
+    # Get current user info
+    try:
+        user_id = int(get_jwt_identity())
+        current_user = Staff.query.get(user_id)
+        if not current_user:
+            return jsonify({"error": "User not found"}), 404
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid user"}), 401
+    
+    # Check if user is the author or has admin/owner role
+    if note.author != current_user.username and current_user.role not in ["admin", "owner"]:
+        return jsonify({"error": "You are not authorized to edit this note"}), 403
+    
+    # Update note text if provided
+    note_text = data.get("note_text", "").strip()
+    if not note_text:
+        return jsonify({"error": "Note text is required"}), 400
+    
+    note.note_text = note_text
+    
+    db.session.commit()
+    
+    return jsonify({
+        "message": "Note updated successfully",
+        "note": {
+            "id": note.id,
+            "note_text": note.note_text,
+            "author": note.author,
+            "created_at": note.created_at.isoformat(),
+            "updated_at": note.updated_at.isoformat()
+        }
+    }), 200
+
+
+# DELETE A SPECIFIC NOTE
+@app.route("/api/delete_note/<int:note_id>", methods=["DELETE"])
+@jwt_required()
+def delete_note(note_id):
+    note = Note.query.get(note_id)
+    if not note:
+        return jsonify({"error": "Note not found"}), 404
+    
+    # Get current user info
+    try:
+        user_id = int(get_jwt_identity())
+        current_user = Staff.query.get(user_id)
+        if not current_user:
+            return jsonify({"error": "User not found"}), 404
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid user"}), 401
+    
+    # Check if user is the author or has admin/owner role
+    if note.author != current_user.username and current_user.role not in ["admin", "owner"]:
+        return jsonify({"error": "You are not authorized to delete this note"}), 403
+    
+    db.session.delete(note)
+    db.session.commit()
+    
+    return jsonify({"message": "Note deleted successfully"}), 200
 
 
 #_____________________________________________________________________________________________________________________        
