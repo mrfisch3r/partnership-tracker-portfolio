@@ -153,6 +153,19 @@ class Note(db.Model):
     #seasonal_event_id = db.Column(db.Integer, db.ForeignKey('seasonal_events.id'), nullable=True)
     #potential_partnerships_id = db.Column(db.Integer, db.ForeignKey('potential_partnerships.id'), nullable=True)
     #not_potential_partnerships_id = db.Column(db.Integer, db.ForeignKey('not_potential_partnerships.id'), nullable=True)
+
+
+# Target Population Options - configurable by admins/owners
+class TargetPopulation(db.Model):
+    __tablename__ = 'target_populations'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.now())
+    
+    def __repr__(self):
+        return f'<TargetPopulation {self.name}>'
+
     
 if __name__ == "__main__":
     with app.app_context():

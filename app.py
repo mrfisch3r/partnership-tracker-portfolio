@@ -240,6 +240,104 @@ def delete_user(user_id):
         return jsonify({"error": str(e)}), 500
 
 
+#_____________________________________________________________________________________________________________
+# TARGET POPULATION MANAGEMENT (Admin/Owner only)
+
+# GET ALL TARGET POPULATIONS
+@app.route("/api/target_populations", methods=["GET"])
+def get_target_populations():
+    try:
+        from models import TargetPopulation
+        populations = TargetPopulation.query.order_by(TargetPopulation.name).all()
+        return jsonify({
+            "target_populations": [
+                {
+                    "id": pop.id,
+                    "name": pop.name,
+                    "created_at": pop.created_at.isoformat()
+                }
+                for pop in populations
+            ]
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ADD NEW TARGET POPULATION (Admin/Owner only)
+@app.route("/api/target_populations", methods=["POST"])
+@jwt_required()
+def add_target_population():
+    try:
+        from models import TargetPopulation
+        
+        # Get current user info
+        current_user_id = int(get_jwt_identity())
+        current_user = Staff.query.get(current_user_id)
+        
+        if not current_user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Check if current user is admin or owner
+        if current_user.role not in ["admin", "owner"]:
+            return jsonify({"error": "Unauthorized. Admin or Owner role required"}), 403
+        
+        data = request.get_json()
+        name = data.get("name", "").strip()
+        
+        if not name:
+            return jsonify({"error": "Target population name is required"}), 400
+        
+        # Check if already exists
+        existing = TargetPopulation.query.filter_by(name=name).first()
+        if existing:
+            return jsonify({"error": "Target population already exists"}), 400
+        
+        new_population = TargetPopulation(name=name)
+        db.session.add(new_population)
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Target population added successfully",
+            "target_population": {
+                "id": new_population.id,
+                "name": new_population.name,
+                "created_at": new_population.created_at.isoformat()
+            }
+        }), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# DELETE TARGET POPULATION (Admin/Owner only)
+@app.route("/api/target_populations/<int:population_id>", methods=["DELETE"])
+@jwt_required()
+def delete_target_population(population_id):
+    try:
+        from models import TargetPopulation
+        
+        # Get current user info
+        current_user_id = int(get_jwt_identity())
+        current_user = Staff.query.get(current_user_id)
+        
+        if not current_user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Check if current user is admin or owner
+        if current_user.role not in ["admin", "owner"]:
+            return jsonify({"error": "Unauthorized. Admin or Owner role required"}), 403
+        
+        population = TargetPopulation.query.get(population_id)
+        if not population:
+            return jsonify({"error": "Target population not found"}), 404
+        
+        db.session.delete(population)
+        db.session.commit()
+        
+        return jsonify({"message": f"Target population '{population.name}' deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 def role_required(required_role):
     """Decorator to require a specific role stored in JWT additional claims.
 
@@ -903,6 +1001,47 @@ def add_monthly_update():
     })
     
 
+# UPDATE EXISTING ENTRY IN MonthlyUpdates TABLE
+@app.route("/api/update_monthly_update/<int:update_id>", methods=["OPTIONS"])
+def update_monthly_update_options(update_id):
+    return ("", 200)
+
+
+@app.route("/api/update_monthly_update/<int:update_id>", methods=["PUT"])
+@jwt_required()
+def update_monthly_update(update_id):
+    data = request.get_json() or {}
+    update_record = MonthlyUpdates.query.get(update_id)
+
+    if not update_record:
+        return jsonify({"error": "Monthly update not found"}), 404
+
+    previous_state = model_to_dict(update_record)
+
+    update_record.month_year = data.get("month_year", update_record.month_year)
+    update_record.major_findings = data.get("major_findings", update_record.major_findings)
+    update_record.barriers_and_solutions = data.get(
+        "barriers_and_solutions", update_record.barriers_and_solutions
+    )
+    update_record.notes = data.get("notes", update_record.notes)
+
+    db.session.commit()
+
+    user_id = int(get_jwt_identity())
+    log_change(update_record, user_id=user_id, action="UPDATE", previous_instance=previous_state)
+
+    return jsonify({
+        "message": "Monthly update updated successfully.",
+        "update": {
+            "id": update_record.id,
+            "month_year": update_record.month_year,
+            "major_findings": update_record.major_findings,
+            "barriers_and_solutions": update_record.barriers_and_solutions,
+            "notes": update_record.notes
+        }
+    }), 200
+
+
 # ADD ENTRY TO A COUNTY TABLE
 @app.route("/api/add_county_entry", methods=["POST"])
 @jwt_required()
@@ -1155,9 +1294,9 @@ def delete_note(note_id):
     except (ValueError, TypeError):
         return jsonify({"error": "Invalid user"}), 401
     
-    # Check if user is the author or has admin/owner role
-    if note.author != current_user.username and current_user.role not in ["admin", "owner"]:
-        return jsonify({"error": "You are not authorized to delete this note"}), 403
+    # Only admins or owners can delete notes
+    if current_user.role not in ["admin", "owner"]:
+        return jsonify({"error": "Unauthorized. Admin or Owner role required"}), 403
     
     db.session.delete(note)
     db.session.commit()
@@ -1304,8 +1443,8 @@ def update_partners(id):
     partner.organization_name = data.get("organization_name", partner.organization_name)
     partner.contacts = data.get("contacts", partner.contacts)
     partner.target_population = data.get("target_population", partner.target_population)
-    partner.contact_date = data.get("partner_dates", partner.contact_date)
-    partner.next_contact = data.get("reoccuring_partner", partner.next_contact)
+    partner.contact_date = data.get("contact_date", partner.contact_date)
+    partner.next_contact = data.get("next_contact", partner.next_contact)
     partner.notes = data.get("notes", partner.notes)
 
     db.session.commit()
@@ -1365,8 +1504,8 @@ def update_not_partners(id):
     partner.organization_name = data.get("organization_name", partner.organization_name)
     partner.contacts = data.get("contacts", partner.contacts)
     partner.target_population = data.get("target_population", partner.target_population)
-    partner.contact_date = data.get("partner_dates", partner.contact_date)
-    partner.contact_attempt = data.get("reoccuring_partner", partner.contact_attempt)
+    partner.contact_date = data.get("contact_date", partner.contact_date)
+    partner.contact_attempt = data.get("contact_attempt", partner.contact_attempt)
     partner.notes = data.get("notes", partner.notes)
 
     db.session.commit()
@@ -1605,15 +1744,25 @@ def delete_entry():
     if not entry:
         return jsonify({'error': 'Entry not found'}), 404
 
+    try:
+        current_user_id = int(get_jwt_identity())
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid user"}), 401
+
+    current_user = Staff.query.get(current_user_id)
+    if not current_user:
+        return jsonify({"error": "User not found"}), 404
+
+    if current_user.role not in ["admin", "owner"]:
+        return jsonify({"error": "Unauthorized. Admin or Owner role required"}), 403
+
     # Snapshot before deletion for logging
     previous_snapshot = model_to_dict(entry)
-
-    user_id = int(get_jwt_identity())
 
     # Log deletion BEFORE removing
     log_change(
         instance=entry,
-        user_id=user_id,
+        user_id=current_user_id,
         action="DELETE",
         previous_instance=previous_snapshot
     )
@@ -1643,6 +1792,18 @@ def delete_entry():
 @app.route("/api/delete_site_event/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_site_event(id):
+    try:
+        current_user_id = int(get_jwt_identity())
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid user"}), 401
+
+    current_user = Staff.query.get(current_user_id)
+    if not current_user:
+        return jsonify({"error": "User not found"}), 404
+
+    if current_user.role not in ["admin", "owner"]:
+        return jsonify({"error": "Unauthorized. Admin or Owner role required"}), 403
+
     site_event = SiteEvent.query.get(id)
     if not site_event:
         return jsonify({"message": "Site event not found"}), 404
@@ -1663,13 +1824,11 @@ def delete_site_event(id):
     db.session.commit()
 
     # Log deletion
-    user_id = int(get_jwt_identity())   # convert string ID to int
-    staff_user = Staff.query.get(user_id)
-    username = staff_user.username if staff_user else "Unknown User"
+    username = current_user.username if current_user else "Unknown User"
 
     log_change(
         instance=site_event,
-        user_id=user_id,
+        user_id=current_user_id,
         action="DELETE",
         previous_instance=previous_snapshot
     )
@@ -1691,6 +1850,18 @@ def delete_county_entry(id):
     if not county_name:
         return jsonify({"error": "Missing 'county_name' field"}), 400
 
+    try:
+        current_user_id = int(get_jwt_identity())
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid user"}), 401
+
+    current_user = Staff.query.get(current_user_id)
+    if not current_user:
+        return jsonify({"error": "User not found"}), 404
+
+    if current_user.role not in ["admin", "owner"]:
+        return jsonify({"error": "Unauthorized. Admin or Owner role required"}), 403
+
     # Sanitize table name
     table_name = county_name.strip().replace(" ", "_").lower()
 
@@ -1710,13 +1881,10 @@ def delete_county_entry(id):
     
     previous_snapshot = model_to_dict(entry)
     
-    identity = get_jwt_identity()
-    user_id = identity["id"]
-
     # Log BEFORE deleting (so we still have the instance)
     log_change(
         instance=entry,          # pass the actual entry
-        user_id=user_id,               # replace with current logged-in user ID
+        user_id=current_user_id,               # replace with current logged-in user ID
         action="DELETE",
         previous_instance=previous_snapshot
     )
