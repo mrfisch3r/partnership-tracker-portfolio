@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 
 const NotesTableModal = ({
   isOpen,
@@ -108,13 +109,14 @@ const NotesTableModal = ({
     setSuccessMessage("");
 
     try {
+      const token = localStorage.getItem("access_token");
       const res = await fetch(
         `http://localhost:5001/api/add_note_to_entry/${objectType}/${objectId}/notes`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({
             note_text: newNoteText,
@@ -152,13 +154,14 @@ const NotesTableModal = ({
     setSuccessMessage("");
 
     try {
+      const token = localStorage.getItem("access_token");
       const res = await fetch(
         `http://localhost:5001/api/update_note/${noteId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({
             note_text: editNoteText,
@@ -194,12 +197,13 @@ const NotesTableModal = ({
     setSuccessMessage("");
 
     try {
+      const token = localStorage.getItem("access_token");
       const res = await fetch(
         `http://localhost:5001/api/delete_note/${noteId}`,
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         }
       );
@@ -256,7 +260,7 @@ const NotesTableModal = ({
 
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div className="modal-overlay">
       <div className="notes-modal-fixed-layout" ref={modalRef}>
         {/* Header */}
@@ -381,11 +385,16 @@ const NotesTableModal = ({
 
         {/* Footer */}
         <div className="modal-footer">
-          <button onClick={onClose}>Close</button>
+          <button onClick={onClose} className="red-button">
+            Close
+          </button>
         </div>
       </div>
     </div>
   );
+
+  // Use React Portal to render at document root level
+  return ReactDOM.createPortal(modalContent, document.body);
 };
 
 export default NotesTableModal;

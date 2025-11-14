@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import NotesTableModal from "./NotesTableModal";
 
 const SeasonalEventsTable = ({
   filters,
@@ -11,17 +12,41 @@ const SeasonalEventsTable = ({
   const [sortOrder, setSortOrder] = useState("desc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notesModalOpen, setNotesModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
+  // Helper function: Extract the most recent date from a compound date string
+  const extractLatestDate = (dateString) => {
+    if (!dateString) return new Date(0);
+
+    // Look for date patterns like MM/DD/YY or MM/DD/YYYY
+    const datePattern = /(\d{1,2}\/\d{1,2}\/\d{2,4})/g;
+    const matches = dateString.match(datePattern);
+
+    if (!matches || matches.length === 0) return new Date(0);
+
+    // Convert all found dates to Date objects
+    const dates = matches.map((match) => new Date(match));
+
+    // Filter out invalid dates
+    const validDates = dates.filter((date) => !isNaN(date.getTime()));
+    if (validDates.length === 0) return new Date(0);
+
+    // Return the most recent date
+    return new Date(Math.max(...validDates.map((date) => date.getTime())));
+  };
 
   // Fetch events data when component mounts or refreshTrigger changes
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
+        const token = localStorage.getItem("access_token");
         const res = await fetch(
           "http://localhost:5001/api/get_seasonal_events",
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
           }
         );
@@ -43,6 +68,9 @@ const SeasonalEventsTable = ({
 
   // Filter events based on sidebar filters
   const filtered = events.filter((event) => {
+    // Safety check for filters object - must be first!
+    if (!filters) return true;
+
     // Filter by organization name (if set)
     const byOrganization = filters.organization
       ? event.organization_name
@@ -58,29 +86,57 @@ const SeasonalEventsTable = ({
           )
         : true;
 
-    return byOrganization && byTargetPopulation;
+    // Filter by date range
+    const byDateRange = (() => {
+      try {
+        if (!filters?.dateFilterType || filters?.dateFilterType === "all")
+          return true;
+
+        const latestDate = extractLatestDate(event.event_dates);
+        if (latestDate.getTime() === 0) return false; // No valid date found
+
+        // Build custom filter date from MM/DD/YYYY inputs
+        const customMonth = filters?.customMonth
+          ? parseInt(filters.customMonth)
+          : null;
+        const customDay = filters?.customDay
+          ? parseInt(filters.customDay)
+          : null;
+        const customYear = filters?.customYear
+          ? parseInt(filters.customYear)
+          : null;
+
+        if (
+          !customMonth ||
+          !customDay ||
+          !customYear ||
+          customMonth < 1 ||
+          customMonth > 12 ||
+          customDay < 1 ||
+          customDay > 31 ||
+          customYear < 1900 ||
+          customYear > 2100
+        ) {
+          return true; // Invalid date input, show all
+        }
+
+        const filterDate = new Date(customYear, customMonth - 1, customDay);
+
+        const comparison = filters?.dateComparison || "after";
+        if (comparison === "before") {
+          return latestDate < filterDate;
+        } else {
+          // "after"
+          return latestDate >= filterDate;
+        }
+      } catch (error) {
+        console.error("Error in date filtering:", error);
+        return true; // On error, show the item
+      }
+    })();
+
+    return byOrganization && byTargetPopulation && byDateRange;
   });
-
-  // Extract the most recent date from a compound date string
-  const extractLatestDate = (dateString) => {
-    if (!dateString) return new Date(0);
-
-    // Look for date patterns like MM/DD/YY or MM/DD/YYYY
-    const datePattern = /(\d{1,2}\/\d{1,2}\/\d{2,4})/g;
-    const matches = dateString.match(datePattern);
-
-    if (!matches || matches.length === 0) return new Date(0);
-
-    // Convert all found dates to Date objects
-    const dates = matches.map((match) => new Date(match));
-
-    // Filter out invalid dates
-    const validDates = dates.filter((date) => !isNaN(date.getTime()));
-    if (validDates.length === 0) return new Date(0);
-
-    // Return the most recent date
-    return new Date(Math.max(...validDates.map((date) => date.getTime())));
-  };
 
   // Sort events by date
   const sorted = [...filtered].sort((a, b) => {
@@ -147,7 +203,7 @@ const SeasonalEventsTable = ({
               <th>Target Population</th>
               <th>Event Date(s)</th>
               <th>Reoccuring Event?</th>
-              <th>Has Notes</th>
+              <th>Notes</th>
             </tr>
           </thead>
           <tbody>
@@ -162,18 +218,34 @@ const SeasonalEventsTable = ({
                 <td>{event.target_population}</td>
                 <td>{formatEventDate(event.event_dates)}</td>
                 <td>{event.reoccuring_event}</td>
-                <td>
-                  {event.notes && event.notes.trim() ? (
-                    <span className="notes-indicator">Yes</span>
-                  ) : (
-                    "No"
-                  )}
+                <td onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className="view-notes-button"
+                    onClick={() => {
+                      setSelectedEvent({
+                        id: event.id,
+                        name: event.organization_name || event.name,
+                        type: "seasonalevents",
+                      });
+                      setNotesModalOpen(true);
+                    }}
+                  >
+                    View
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+
+      <NotesTableModal
+        isOpen={notesModalOpen}
+        onClose={() => setNotesModalOpen(false)}
+        objectId={selectedEvent?.id}
+        objectType={selectedEvent?.type}
+        objectName={selectedEvent?.name}
+      />
     </div>
   );
 };

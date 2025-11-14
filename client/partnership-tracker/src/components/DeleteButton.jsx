@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 /**
  * Reusable delete button component with confirmation
- * 
+ *
  * @param {Object} props Component properties
  * @param {string} props.table - Database table name (e.g., 'outreachevents', 'potentialpartnerships')
  * @param {number} props.id - ID of the item to delete
@@ -11,13 +11,13 @@ import React, { useState } from 'react';
  * @param {string} props.buttonText - Custom button text (optional)
  * @param {string} props.className - Additional CSS classes (optional)
  */
-const DeleteButton = ({ 
-  table, 
-  id, 
-  itemName, 
-  onDelete, 
-  buttonText = "Delete", 
-  className = "" 
+const DeleteButton = ({
+  table,
+  id,
+  itemName,
+  onDelete,
+  buttonText = "Delete",
+  className = "",
 }) => {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -38,39 +38,40 @@ const DeleteButton = ({
   // Confirm and execute deletion
   const handleConfirmDelete = async (e) => {
     e.stopPropagation(); // Prevent event bubbling to parent elements
-    
+
     if (!table || !id) {
       setError("Missing required data for deletion");
       return;
     }
-    
+
     try {
       setIsDeleting(true);
-      
-      const response = await fetch('http://localhost:5001/api/delete_entry', {
-        method: 'DELETE',
+
+      const token = localStorage.getItem("access_token");
+      const response = await fetch("http://localhost:5001/api/delete_entry", {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           table: table,
-          id: id
-        })
+          id: id,
+        }),
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to delete item');
+        throw new Error(data.error || "Failed to delete item");
       }
-      
+
       // Call the onDelete callback to notify parent component
-      if (onDelete && typeof onDelete === 'function') {
+      if (onDelete && typeof onDelete === "function") {
         onDelete(id);
       }
-      
     } catch (err) {
-      console.error('Error deleting item:', err);
-      setError(err.message || 'Failed to delete item');
+      console.error("Error deleting item:", err);
+      setError(err.message || "Failed to delete item");
       setIsConfirming(false);
     } finally {
       setIsDeleting(false);
@@ -78,13 +79,15 @@ const DeleteButton = ({
   };
 
   // Button styling based on state
-  const buttonClass = `delete-button ${className} ${isConfirming ? 'confirming' : ''}`;
+  const buttonClass = `delete-button ${className} ${
+    isConfirming ? "confirming" : ""
+  }`;
 
   return (
     <div className="delete-button-container">
       {!isConfirming ? (
-        <button 
-          type="button" 
+        <button
+          type="button"
           className={buttonClass}
           onClick={handleInitialClick}
           disabled={isDeleting}
@@ -101,7 +104,7 @@ const DeleteButton = ({
               onClick={handleConfirmDelete}
               disabled={isDeleting}
             >
-              {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+              {isDeleting ? "Deleting..." : "Yes, Delete"}
             </button>
             <button
               type="button"
@@ -114,7 +117,7 @@ const DeleteButton = ({
           </div>
         </div>
       )}
-      
+
       {error && <p className="delete-error">{error}</p>}
     </div>
   );

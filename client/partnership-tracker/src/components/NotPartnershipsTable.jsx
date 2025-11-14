@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import NotesTableModal from "./NotesTableModal";
 
 const NotPartnershipsTable = ({
   filters,
@@ -10,6 +11,32 @@ const NotPartnershipsTable = ({
   const [sortOrder, setSortOrder] = useState("desc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notesModalOpen, setNotesModalOpen] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState(null);
+
+  // Helper function: Extract the most recent contact date from the contact_date field
+  const getRecentContactDate = (contactStr) => {
+    if (!contactStr) return null;
+
+    // Look for date patterns like MM/DD/YY or MM/DD/YYYY
+    const datePattern = /(\d{1,2}\/\d{1,2}\/\d{2,4})/g;
+    const matches = contactStr.match(datePattern);
+
+    if (!matches || matches.length === 0) return null;
+
+    // Convert all found dates to Date objects
+    const dates = matches.map((match) => new Date(match));
+
+    // Filter out invalid dates
+    const validDates = dates.filter((date) => !isNaN(date.getTime()));
+    if (validDates.length === 0) return null;
+
+    // Return the most recent date as a string
+    const mostRecentDate = new Date(
+      Math.max(...validDates.map((date) => date.getTime()))
+    );
+    return mostRecentDate.toLocaleDateString("en-US");
+  };
 
   // Fetch partners data when component mounts or refreshTrigger changes
   useEffect(() => {
@@ -36,6 +63,9 @@ const NotPartnershipsTable = ({
 
   // Filter based on sidebar controls
   const filtered = partners.filter((p) => {
+    // Safety check for filters object
+    if (!filters) return true;
+
     // Filter by organization name (if set)
     const byOrganization = filters.organization
       ? p.organization_name
@@ -51,28 +81,75 @@ const NotPartnershipsTable = ({
           )
         : true;
 
-    return byOrganization && byTargetPopulation;
+    // Filter by date range
+    const byDateRange = (() => {
+      try {
+        if (!filters?.dateFilterType || filters?.dateFilterType === "all")
+          return true;
+
+        const recentDate = getRecentContactDate(p.contact_date);
+        if (!recentDate) return false;
+
+        const contactDate = new Date(recentDate);
+        if (isNaN(contactDate.getTime())) return false;
+
+        // Build custom filter date from MM/DD/YYYY inputs
+        const customMonth = filters?.customMonth
+          ? parseInt(filters.customMonth)
+          : null;
+        const customDay = filters?.customDay
+          ? parseInt(filters.customDay)
+          : null;
+        const customYear = filters?.customYear
+          ? parseInt(filters.customYear)
+          : null;
+
+        if (
+          !customMonth ||
+          !customDay ||
+          !customYear ||
+          customMonth < 1 ||
+          customMonth > 12 ||
+          customDay < 1 ||
+          customDay > 31 ||
+          customYear < 1900 ||
+          customYear > 2100
+        ) {
+          return true; // Invalid date input, show all
+        }
+
+        const filterDate = new Date(customYear, customMonth - 1, customDay);
+
+        const comparison = filters?.dateComparison || "after";
+        if (comparison === "before") {
+          return contactDate < filterDate;
+        } else {
+          // "after"
+          return contactDate >= filterDate;
+        }
+      } catch (error) {
+        console.error("Error in date filtering:", error);
+        return true; // On error, show the item
+      }
+    })();
+
+    return byOrganization && byTargetPopulation && byDateRange;
   });
 
-  // Extract the most recent contact date from the contact_date field
-  const getRecentContactDate = (dateString) => {
+  // Helper to get the last date from a string for sorting
+  const getLastDateForSort = (dateString) => {
     if (!dateString) return "";
-
-    // Look for date patterns like MM/DD/YYYY or M/D/YY
     const datePattern = /(\d{1,2}\/\d{1,2}\/\d{2,4})/g;
     const matches = dateString.match(datePattern);
-
     if (!matches || matches.length === 0) return dateString;
-
-    // Return the most recent date (which should be the last one)
     return matches[matches.length - 1];
   };
 
   // Sort by contact_date
   const sorted = [...filtered].sort((a, b) => {
     // Get the most recent date for each entry
-    const dateA = getRecentContactDate(a.contact_date);
-    const dateB = getRecentContactDate(b.contact_date);
+    const dateA = getLastDateForSort(a.contact_date);
+    const dateB = getLastDateForSort(b.contact_date);
 
     // Convert to Date objects for comparison
     const timeA = dateA ? new Date(dateA) : new Date(0);
@@ -127,7 +204,7 @@ const NotPartnershipsTable = ({
               <th>Target Population</th>
               <th>Contact Date</th>
               <th>Type of Attempted Contact</th>
-              <th>Has Notes</th>
+              <th>Notes</th>
             </tr>
           </thead>
           <tbody>
@@ -146,12 +223,20 @@ const NotPartnershipsTable = ({
                   <td>{partner.target_population}</td>
                   <td>{recentDate || "N/A"}</td>
                   <td>{(partner.contact_attempt, 30)}</td>
-                  <td>
-                    {partner.notes && partner.notes.trim() ? (
-                      <span className="notes-indicator">Yes</span>
-                    ) : (
-                      "No"
-                    )}
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className="view-notes-button"
+                      onClick={() => {
+                        setSelectedPartner({
+                          id: partner.id,
+                          name: partner.organization_name || partner.name,
+                          type: "notpotentialpartnerships",
+                        });
+                        setNotesModalOpen(true);
+                      }}
+                    >
+                      View
+                    </button>
                   </td>
                 </tr>
               );
@@ -159,6 +244,14 @@ const NotPartnershipsTable = ({
           </tbody>
         </table>
       )}
+
+      <NotesTableModal
+        isOpen={notesModalOpen}
+        onClose={() => setNotesModalOpen(false)}
+        objectId={selectedPartner?.id}
+        objectType={selectedPartner?.type}
+        objectName={selectedPartner?.name}
+      />
     </div>
   );
 };

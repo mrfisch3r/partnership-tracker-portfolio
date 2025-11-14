@@ -1,18 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 
-const NotesModal = ({ isOpen, onClose, eventId, initialNotes, eventName, onSaveSuccess }) => {
-  const [notes, setNotes] = useState(initialNotes || '');
+const NotesModal = ({
+  isOpen,
+  onClose,
+  eventId,
+  initialNotes,
+  eventName,
+  onSaveSuccess,
+}) => {
+  const [notes, setNotes] = useState(initialNotes || "");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState('');
+  const [saveMessage, setSaveMessage] = useState("");
   const textareaRef = useRef(null);
   const modalRef = useRef(null);
 
   // Reset state when modal opens with new data
   useEffect(() => {
     if (isOpen) {
-      setNotes(initialNotes || '');
-      setSaveMessage('');
+      setNotes(initialNotes || "");
+      setSaveMessage("");
       setIsEditing(false);
     }
   }, [isOpen, initialNotes]);
@@ -36,11 +43,11 @@ const NotesModal = ({ isOpen, onClose, eventId, initialNotes, eventName, onSaveS
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onClose]);
 
@@ -49,36 +56,41 @@ const NotesModal = ({ isOpen, onClose, eventId, initialNotes, eventName, onSaveS
     if (e) {
       e.preventDefault();
     }
-    
+
     setIsSaving(true);
-    setSaveMessage('');
-    
+    setSaveMessage("");
+
     try {
-      const res = await fetch(`http://localhost:5001/api/update_outreach_event/${eventId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          notes: notes
-        })
-      });
-      
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(
+        `http://localhost:5001/api/update_outreach_event/${eventId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            notes: notes,
+          }),
+        }
+      );
+
       const data = await res.json();
-      
+
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to update notes');
+        throw new Error(data.message || "Failed to update notes");
       }
-      
-      setSaveMessage('Notes updated successfully');
+
+      setSaveMessage("Notes updated successfully");
       setIsEditing(false);
-      
+
       if (onSaveSuccess) {
         onSaveSuccess(notes);
       }
     } catch (err) {
-      console.error('Error updating notes:', err);
-      setSaveMessage(`Error: ${err.message || 'Failed to update notes'}`);
+      console.error("Error updating notes:", err);
+      setSaveMessage(`Error: ${err.message || "Failed to update notes"}`);
     } finally {
       setIsSaving(false);
     }
@@ -88,10 +100,10 @@ const NotesModal = ({ isOpen, onClose, eventId, initialNotes, eventName, onSaveS
   const handleChange = (e) => {
     setNotes(e.target.value);
   };
-  
+
   // Handle cancel edit
   const handleCancel = () => {
-    setNotes(initialNotes || '');
+    setNotes(initialNotes || "");
     setIsEditing(false);
   };
 
@@ -99,13 +111,19 @@ const NotesModal = ({ isOpen, onClose, eventId, initialNotes, eventName, onSaveS
 
   return (
     <div className="modal-overlay" onMouseDown={(e) => e.stopPropagation()}>
-      <div className="notes-modal-fixed-layout" ref={modalRef} onMouseDown={(e) => e.stopPropagation()}>
+      <div
+        className="notes-modal-fixed-layout"
+        ref={modalRef}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         {/* Fixed header */}
         <div className="modal-header">
           <h3>Notes for {eventName}</h3>
-          <button className="close-button" onClick={onClose}>X</button>
+          <button className="close-button" onClick={onClose}>
+            X
+          </button>
         </div>
-        
+
         {/* Scrollable content area */}
         <div className="modal-content-area">
           {isEditing ? (
@@ -117,26 +135,24 @@ const NotesModal = ({ isOpen, onClose, eventId, initialNotes, eventName, onSaveS
               onMouseDown={(e) => e.stopPropagation()}
             />
           ) : (
-            <div className="notes-content">
-              {notes || 'No notes available'}
-            </div>
+            <div className="notes-content">{notes || "No notes available"}</div>
           )}
         </div>
-        
+
         {/* Fixed footer with buttons */}
         <div className="modal-footer">
           {isEditing ? (
             <>
               <div className="button-group">
-                <button 
+                <button
                   type="button"
-                  onClick={handleSaveNotes} 
+                  onClick={handleSaveNotes}
                   disabled={isSaving}
                   className="save-button"
                 >
-                  {isSaving ? 'Saving...' : 'Save Notes'}
+                  {isSaving ? "Saving..." : "Save Notes"}
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={handleCancel}
                   className="cancel-button"
@@ -145,20 +161,28 @@ const NotesModal = ({ isOpen, onClose, eventId, initialNotes, eventName, onSaveS
                 </button>
               </div>
               {saveMessage && (
-                <p className={saveMessage.includes('Error') ? 'error-message' : 'success-message'}>
+                <p
+                  className={
+                    saveMessage.includes("Error")
+                      ? "error-message"
+                      : "success-message"
+                  }
+                >
                   {saveMessage}
                 </p>
               )}
             </>
           ) : (
             <div className="button-group">
-              <button 
-                onClick={() => setIsEditing(true)} 
+              <button
+                onClick={() => setIsEditing(true)}
                 className="blue-button"
               >
                 Edit Notes
               </button>
-              <button onClick={onClose}>Close</button>
+              <button onClick={onClose} className="red-button">
+                Close
+              </button>
             </div>
           )}
         </div>

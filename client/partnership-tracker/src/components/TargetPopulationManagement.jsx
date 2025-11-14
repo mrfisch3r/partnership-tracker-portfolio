@@ -13,9 +13,7 @@ const TargetPopulationManagement = () => {
 
   const fetchPopulations = async () => {
     try {
-      const res = await fetch(
-        "http://localhost:5001/api/target_populations"
-      );
+      const res = await fetch("http://localhost:5001/api/target_populations");
 
       if (!res.ok) {
         throw new Error("Failed to fetch target populations");
@@ -33,7 +31,7 @@ const TargetPopulationManagement = () => {
 
   const handleAddPopulation = async (e) => {
     e.preventDefault();
-    
+
     if (!newPopulationName.trim()) {
       setError("Please enter a target population name");
       return;
@@ -43,17 +41,15 @@ const TargetPopulationManagement = () => {
     setSuccessMessage("");
 
     try {
-      const res = await fetch(
-        "http://localhost:5001/api/target_populations",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          },
-          body: JSON.stringify({ name: newPopulationName.trim() }),
-        }
-      );
+      const token = localStorage.getItem("access_token");
+      const res = await fetch("http://localhost:5001/api/target_populations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ name: newPopulationName.trim() }),
+      });
 
       if (!res.ok) {
         const data = await res.json();
@@ -76,7 +72,11 @@ const TargetPopulationManagement = () => {
   };
 
   const handleDeletePopulation = async (populationId, populationName) => {
-    if (!window.confirm(`Are you sure you want to delete "${populationName}"? This action cannot be undone.`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete "${populationName}"? This action cannot be undone.`
+      )
+    ) {
       return;
     }
 
@@ -84,12 +84,13 @@ const TargetPopulationManagement = () => {
     setSuccessMessage("");
 
     try {
+      const token = localStorage.getItem("access_token");
       const res = await fetch(
         `http://localhost:5001/api/target_populations/${populationId}`,
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         }
       );
@@ -126,7 +127,8 @@ const TargetPopulationManagement = () => {
     <div className="target-population-management">
       <h2>Target Population Management</h2>
       <p className="management-description">
-        Manage target population options that appear in dropdowns when adding or editing entries.
+        Manage target population options that appear in dropdowns when adding or
+        editing entries.
       </p>
 
       {error && <div className="error-message">{error}</div>}
@@ -164,7 +166,14 @@ const TargetPopulationManagement = () => {
           <tbody>
             {populations.length === 0 ? (
               <tr>
-                <td colSpan="3" style={{ textAlign: "center", padding: "2rem", color: "#666" }}>
+                <td
+                  colSpan="3"
+                  style={{
+                    textAlign: "center",
+                    padding: "2rem",
+                    color: "#666",
+                  }}
+                >
                   No target populations added yet. Add one above to get started.
                 </td>
               </tr>
@@ -175,15 +184,20 @@ const TargetPopulationManagement = () => {
                     <strong>{population.name}</strong>
                   </td>
                   <td>
-                    {new Date(population.created_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric"
-                    })}
+                    {new Date(population.created_at).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      }
+                    )}
                   </td>
                   <td>
                     <button
-                      onClick={() => handleDeletePopulation(population.id, population.name)}
+                      onClick={() =>
+                        handleDeletePopulation(population.id, population.name)
+                      }
                       className="delete-population-button"
                     >
                       Delete
@@ -200,4 +214,3 @@ const TargetPopulationManagement = () => {
 };
 
 export default TargetPopulationManagement;
-

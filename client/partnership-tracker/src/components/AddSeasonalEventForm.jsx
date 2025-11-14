@@ -51,11 +51,12 @@ const AddSeasonalEventForm = ({ onEventAdded }) => {
     try {
       setIsSubmitting(true);
       // Send POST request to backend
+      const token = localStorage.getItem("access_token");
       const res = await fetch("http://localhost:5001/api/add_seasonal_event", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(formData),
       });

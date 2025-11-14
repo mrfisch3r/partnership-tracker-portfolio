@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 /**
  * A modal dialog for confirming item deletion
- * 
+ *
  * @param {Object} props - Component props
  * @param {boolean} props.isOpen - Whether the modal is visible
  * @param {Function} props.onClose - Function to call when closing the modal
@@ -11,13 +11,13 @@ import React, { useState } from 'react';
  * @param {string} props.itemName - Name of the item to display in confirmation
  * @param {Function} props.onDeleteSuccess - Function to call after successful deletion
  */
-const DeleteConfirmationModal = ({ 
-  isOpen, 
-  onClose, 
-  table, 
-  id, 
-  itemName, 
-  onDeleteSuccess 
+const DeleteConfirmationModal = ({
+  isOpen,
+  onClose,
+  table,
+  id,
+  itemName,
+  onDeleteSuccess,
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState(null);
@@ -28,38 +28,39 @@ const DeleteConfirmationModal = ({
       setError("Missing required data for deletion");
       return;
     }
-    
+
     try {
       setIsDeleting(true);
       setError(null);
-      
-      const response = await fetch('http://localhost:5001/api/delete_entry', {
-        method: 'DELETE',
+
+      const token = localStorage.getItem("access_token");
+      const response = await fetch("http://localhost:5001/api/delete_entry", {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           table: table,
-          id: id
-        })
+          id: id,
+        }),
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to delete item');
+        throw new Error(data.error || "Failed to delete item");
       }
-      
+
       // Call the onDeleteSuccess callback to notify parent component
-      if (onDeleteSuccess && typeof onDeleteSuccess === 'function') {
+      if (onDeleteSuccess && typeof onDeleteSuccess === "function") {
         onDeleteSuccess(id);
       }
-      
+
       // Close the modal
       onClose();
-      
     } catch (err) {
-      console.error('Error deleting item:', err);
-      setError(err.message || 'Failed to delete item');
+      console.error("Error deleting item:", err);
+      setError(err.message || "Failed to delete item");
     } finally {
       setIsDeleting(false);
     }
@@ -70,29 +71,30 @@ const DeleteConfirmationModal = ({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="delete-confirmation-modal" onClick={e => e.stopPropagation()}>
+      <div
+        className="delete-confirmation-modal"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3>Confirm Deletion</h3>
-        
+
         <div className="confirmation-content">
-          <p>Are you sure you want to delete <strong>{itemName}</strong>?</p>
+          <p>
+            Are you sure you want to delete <strong>{itemName}</strong>?
+          </p>
           <p className="delete-warning">This action cannot be undone.</p>
-          
-          {error && (
-            <div className="delete-error">
-              {error}
-            </div>
-          )}
+
+          {error && <div className="delete-error">{error}</div>}
         </div>
-        
+
         <div className="modal-actions">
-          <button 
+          <button
             className="delete-confirm-button"
             onClick={handleDelete}
             disabled={isDeleting}
           >
-            {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+            {isDeleting ? "Deleting..." : "Yes, Delete"}
           </button>
-          <button 
+          <button
             className="delete-cancel-button"
             onClick={onClose}
             disabled={isDeleting}

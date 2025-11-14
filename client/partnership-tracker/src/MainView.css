@@ -89,7 +89,7 @@ body {
   height: 100%;
   box-sizing: border-box;
   flex-direction: column;
-
+  overflow-y: auto;
   /* Allow sidebar to shrink */
   flex: 0 1 250px; /* Don't grow, allow shrink, 250px base */
 }

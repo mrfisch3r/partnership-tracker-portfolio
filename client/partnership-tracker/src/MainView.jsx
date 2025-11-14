@@ -25,7 +25,11 @@ export function MainView() {
   const [filters, setFilters] = useState({
     organization: "",
     targetPopulations: [],
-    dateRange: "all",
+    dateFilterType: "all",
+    dateComparison: "after",
+    customMonth: "",
+    customDay: "",
+    customYear: "",
   });
 
   // state for selected item from the table

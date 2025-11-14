@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import NotesTableModal from "./NotesTableModal";
 
 const MonthlyUpdatesTable = ({
   filters,
@@ -10,39 +11,10 @@ const MonthlyUpdatesTable = ({
   const [sortOrder, setSortOrder] = useState("desc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notesModalOpen, setNotesModalOpen] = useState(false);
+  const [selectedUpdate, setSelectedUpdate] = useState(null);
 
-  // Fetch monthly updates data when component mounts or refreshTrigger changes
-  useEffect(() => {
-    const fetchUpdates = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(
-          "http://localhost:5001/api/get_monthly_updates"
-        );
-        if (!res.ok) {
-          throw new Error("Failed to fetch monthly updates");
-        }
-        const data = await res.json();
-        setUpdates(data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching monthly updates:", err);
-        setError("Failed to load monthly updates. Please try again later.");
-        setLoading(false);
-      }
-    };
-
-    fetchUpdates();
-  }, [refreshTrigger]);
-
-  // Filter updates based on sidebar filters (e.g., date range)
-  const filtered = updates.filter((update) => {
-    // Implementation for filtering to be added as needed
-    // For now, return all updates
-    return true;
-  });
-
-  // Extract date from month_year field for sorting
+  // Helper function: Extract date from month_year field for comparison
   const getMonthAsDate = (monthStr) => {
     if (!monthStr) return new Date(0);
 
@@ -81,15 +53,102 @@ const MonthlyUpdatesTable = ({
 
     // If previous format didn't match, try other formats or just use the string
     if (!date || isNaN(date.getTime())) {
-      try {
-        date = new Date(monthStr);
-      } catch (e) {
-        return new Date(0);
-      }
+      date = new Date(monthStr);
     }
 
-    return isNaN(date.getTime()) ? new Date(0) : date;
+    return !isNaN(date.getTime()) ? date : new Date(0);
   };
+
+  // Fetch monthly updates data when component mounts or refreshTrigger changes
+  useEffect(() => {
+    const fetchUpdates = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          "http://localhost:5001/api/get_monthly_updates"
+        );
+        if (!res.ok) {
+          throw new Error("Failed to fetch monthly updates");
+        }
+        const data = await res.json();
+        setUpdates(data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching monthly updates:", err);
+        setError("Failed to load monthly updates. Please try again later.");
+        setLoading(false);
+      }
+    };
+
+    fetchUpdates();
+  }, [refreshTrigger]);
+
+  // Filter updates based on sidebar filters
+  const filtered = updates.filter((update) => {
+    // Safety check for filters object
+    if (!filters) return true;
+
+    // Filter by organization name (if set) - monthly updates don't have organization field
+    // but we'll keep the pattern consistent for future extensibility
+    const byOrganization = true; // No organization filtering for monthly updates
+
+    // Filter by target populations - monthly updates don't have target population field
+    // but we'll keep the pattern consistent for future extensibility
+    const byTargetPopulation = true; // No target population filtering for monthly updates
+
+    // Filter by date range based on month_year field
+    const byDateRange = (() => {
+      try {
+        // Additional safety check
+        if (!filters || typeof filters !== "object") return true;
+        if (!filters?.dateFilterType || filters?.dateFilterType === "all")
+          return true;
+
+        const monthDate = getMonthAsDate(update.month_year);
+        if (monthDate.getTime() === 0) return false; // No valid date found
+
+        // Build custom filter date from MM/DD/YYYY inputs
+        const customMonth = filters?.customMonth
+          ? parseInt(filters.customMonth)
+          : null;
+        const customDay = filters?.customDay
+          ? parseInt(filters.customDay)
+          : null;
+        const customYear = filters?.customYear
+          ? parseInt(filters.customYear)
+          : null;
+
+        if (
+          !customMonth ||
+          !customDay ||
+          !customYear ||
+          customMonth < 1 ||
+          customMonth > 12 ||
+          customDay < 1 ||
+          customDay > 31 ||
+          customYear < 1900 ||
+          customYear > 2100
+        ) {
+          return true; // Invalid date input, show all
+        }
+
+        const filterDate = new Date(customYear, customMonth - 1, customDay);
+
+        const comparison = filters?.dateComparison || "after";
+        if (comparison === "before") {
+          return monthDate < filterDate;
+        } else {
+          // "after"
+          return monthDate >= filterDate;
+        }
+      } catch (error) {
+        console.error("Error in date filtering:", error);
+        return true; // On error, show the item
+      }
+    })();
+
+    return byOrganization && byTargetPopulation && byDateRange;
+  });
 
   // Sort updates by month_year
   const sorted = [...filtered].sort((a, b) => {
@@ -158,7 +217,7 @@ const MonthlyUpdatesTable = ({
               <th>Month/Year</th>
               <th>Major Findings</th>
               <th>Barriers & Solutions</th>
-              <th>Has Notes</th>
+              <th>Notes</th>
             </tr>
           </thead>
           <tbody>
@@ -171,18 +230,36 @@ const MonthlyUpdatesTable = ({
                 <td>{formatMonthYear(update.month_year)}</td>
                 <td>{update.major_findings}</td>
                 <td>{update.barriers_and_solutions}</td>
-                <td>
-                  {update.notes && update.notes.trim() ? (
-                    <span className="notes-indicator">Yes</span>
-                  ) : (
-                    "No"
-                  )}
+                <td onClick={(e) => e.stopPropagation()}>
+                  <button
+                    className="view-notes-button"
+                    onClick={() => {
+                      setSelectedUpdate({
+                        id: update.id,
+                        name: `Monthly Update - ${formatMonthYear(
+                          update.month_year
+                        )}`,
+                        type: "monthlyupdates",
+                      });
+                      setNotesModalOpen(true);
+                    }}
+                  >
+                    View
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+
+      <NotesTableModal
+        isOpen={notesModalOpen}
+        onClose={() => setNotesModalOpen(false)}
+        objectId={selectedUpdate?.id}
+        objectType={selectedUpdate?.type}
+        objectName={selectedUpdate?.name}
+      />
     </div>
   );
 };

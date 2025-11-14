@@ -5,7 +5,11 @@ const Sidebar = ({ onFilterChange }) => {
   const [organization, setOrganization] = useState("");
   const [targetPopulations, setTargetPopulations] = useState([]);
   const [selectedPopulations, setSelectedPopulations] = useState([]);
-  const [dateRange, setDateRange] = useState("all");
+  const [dateFilterType, setDateFilterType] = useState("all");
+  const [dateComparison, setDateComparison] = useState("after");
+  const [customMonth, setCustomMonth] = useState("");
+  const [customDay, setCustomDay] = useState("");
+  const [customYear, setCustomYear] = useState("");
   const [showPopulationDropdown, setShowPopulationDropdown] = useState(false);
 
   // Fetch target populations on component mount
@@ -31,7 +35,11 @@ const Sidebar = ({ onFilterChange }) => {
     onFilterChange({
       organization: newOrganization,
       targetPopulations: selectedPopulations,
-      dateRange,
+      dateFilterType,
+      dateComparison,
+      customMonth,
+      customDay,
+      customYear,
     });
   };
 
@@ -49,18 +57,66 @@ const Sidebar = ({ onFilterChange }) => {
     onFilterChange({
       organization,
       targetPopulations: updatedSelections,
-      dateRange,
+      dateFilterType,
+      dateComparison,
+      customMonth,
+      customDay,
+      customYear,
     });
   };
 
-  // Update date range filter
-  const handleDateRangeChange = (e) => {
-    const newDateRange = e.target.value;
-    setDateRange(newDateRange);
+  // Update date filter
+  const handleDateFilterTypeChange = (e) => {
+    const newType = e.target.value;
+    setDateFilterType(newType);
+    updateFilters({
+      dateFilterType: newType,
+      dateComparison,
+      customMonth,
+      customDay,
+      customYear,
+    });
+  };
+
+  const handleDateComparisonChange = (e) => {
+    const newComparison = e.target.value;
+    setDateComparison(newComparison);
+    updateFilters({
+      dateFilterType,
+      dateComparison: newComparison,
+      customMonth,
+      customDay,
+      customYear,
+    });
+  };
+
+  const handleCustomDateChange = (field, value) => {
+    switch (field) {
+      case "month":
+        setCustomMonth(value);
+        break;
+      case "day":
+        setCustomDay(value);
+        break;
+      case "year":
+        setCustomYear(value);
+        break;
+    }
+    updateFilters({
+      dateFilterType,
+      dateComparison,
+      customMonth: field === "month" ? value : customMonth,
+      customDay: field === "day" ? value : customDay,
+      customYear: field === "year" ? value : customYear,
+    });
+  };
+
+  // Helper function to update filters
+  const updateFilters = (dateFilter) => {
     onFilterChange({
       organization,
       targetPopulations: selectedPopulations,
-      dateRange: newDateRange,
+      ...dateFilter,
     });
   };
 
@@ -162,18 +218,112 @@ const Sidebar = ({ onFilterChange }) => {
       </div>
 
       <div className="filter-section">
-        <label htmlFor="date-range">Contact Date:</label>
-        <select
-          id="date-range"
-          value={dateRange}
-          onChange={handleDateRangeChange}
+        <label>Date:</label>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
         >
-          <option value="all">All Time</option>
-          <option value="last30">Last 30 Days</option>
-          <option value="last90">Last 90 Days</option>
-          <option value="last180">Last 6 Months</option>
-          <option value="last365">Last Year</option>
-        </select>
+          <select
+            id="date-filter-type"
+            value={dateFilterType}
+            onChange={handleDateFilterTypeChange}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+            }}
+          >
+            <option value="all">All Time</option>
+            <option value="custom">Custom Date</option>
+          </select>
+
+          {dateFilterType === "custom" && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+              }}
+            >
+              <select
+                id="date-comparison"
+                value={dateComparison}
+                onChange={handleDateComparisonChange}
+                style={{
+                  width: "100%",
+                  padding: "0.6rem",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                }}
+              >
+                <option value="before">Before</option>
+                <option value="after">After</option>
+              </select>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.48rem",
+                  alignItems: "center",
+                }}
+              >
+                <input
+                  type="text"
+                  placeholder="MM"
+                  value={customMonth}
+                  onChange={(e) =>
+                    handleCustomDateChange("month", e.target.value)
+                  }
+                  maxLength="2"
+                  style={{
+                    width: "48px",
+                    padding: "0.5rem",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    textAlign: "center",
+                    fontSize: "0.9rem",
+                  }}
+                />
+                <span style={{ fontSize: "0.95rem", color: "#666" }}>/</span>
+                <input
+                  type="text"
+                  placeholder="DD"
+                  value={customDay}
+                  onChange={(e) =>
+                    handleCustomDateChange("day", e.target.value)
+                  }
+                  maxLength="2"
+                  style={{
+                    width: "48px",
+                    padding: "0.5rem",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    textAlign: "center",
+                    fontSize: "0.9rem",
+                  }}
+                />
+                <span style={{ fontSize: "0.95rem", color: "#666" }}>/</span>
+                <input
+                  type="text"
+                  placeholder="YYYY"
+                  value={customYear}
+                  onChange={(e) =>
+                    handleCustomDateChange("year", e.target.value)
+                  }
+                  maxLength="4"
+                  style={{
+                    width: "66px",
+                    padding: "0.5rem",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px",
+                    textAlign: "center",
+                    fontSize: "0.9rem",
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="sidebar-actions">

@@ -25,9 +25,10 @@ const UserManagement = () => {
     setLoading(true);
     setError("");
     try {
+      const token = localStorage.getItem("access_token");
       const res = await fetch("http://localhost:5001/api/users", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
 
@@ -51,13 +52,14 @@ const UserManagement = () => {
     setSuccessMessage("");
 
     try {
+      const token = localStorage.getItem("access_token");
       const res = await fetch(
         `http://localhost:5001/api/users/${userId}/role`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({ role: newRole }),
         }
@@ -97,10 +99,11 @@ const UserManagement = () => {
     setSuccessMessage("");
 
     try {
+      const token = localStorage.getItem("access_token");
       const res = await fetch(`http://localhost:5001/api/users/${userId}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
 
