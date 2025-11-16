@@ -36,6 +36,27 @@ const OutreachEventsTable = ({
     return new Date(Math.max(...validDates.map((date) => date.getTime())));
   };
 
+  // Helper function: Extract the oldest date from a compound date string
+  const extractOldestDate = (dateString) => {
+    if (!dateString) return new Date(0);
+
+    // Look for date patterns like MM/DD/YY or MM/DD/YYYY
+    const datePattern = /(\d{1,2}\/\d{1,2}\/\d{2,4})/g;
+    const matches = dateString.match(datePattern);
+
+    if (!matches || matches.length === 0) return new Date(0);
+
+    // Convert all found dates to Date objects
+    const dates = matches.map((match) => new Date(match));
+
+    // Filter out invalid dates
+    const validDates = dates.filter((date) => !isNaN(date.getTime()));
+    if (validDates.length === 0) return new Date(0);
+
+    // Return the oldest date
+    return new Date(Math.min(...validDates.map((date) => date.getTime())));
+  };
+
   // Fetch events data when component mounts or refreshTrigger changes
   useEffect(() => {
     const fetchEvents = async () => {
@@ -134,8 +155,15 @@ const OutreachEventsTable = ({
 
   // Sort events by date
   const sorted = [...filtered].sort((a, b) => {
-    const dateA = extractLatestDate(a.event_dates);
-    const dateB = extractLatestDate(b.event_dates);
+    // Use newest date when sorting desc (newest first), oldest date when sorting asc (oldest first)
+    const dateA =
+      sortOrder === "desc"
+        ? extractLatestDate(a.event_dates)
+        : extractOldestDate(a.event_dates);
+    const dateB =
+      sortOrder === "desc"
+        ? extractLatestDate(b.event_dates)
+        : extractOldestDate(b.event_dates);
 
     return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
   });
