@@ -118,7 +118,8 @@ const PartnershipDetails = ({
     // Return the last entry (most recent) in formatted form
     const lastEntry = history[history.length - 1];
     if (lastEntry.date) {
-      return `${lastEntry.date} - ${lastEntry.contact}`;
+      const cleanContact = lastEntry.contact.replace(/[;:\-\s]+$/, "");
+      return `${lastEntry.date} - ${cleanContact}`;
     }
     return lastEntry.contact;
   };
@@ -242,18 +243,23 @@ const PartnershipDetails = ({
   return (
     <>
       <div className="modal-backdrop" onClick={onClose}>
-        <div 
-          className="modal-fixed-layout" 
+        <div
+          className="modal-fixed-layout"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="modal-header">
             <h3>Potential Partnership Details</h3>
-            <button className="close-button" onClick={onClose}>×</button>
+            <button className="close-button" onClick={onClose}>
+              ×
+            </button>
           </div>
 
           <div className="modal-content-area">
             {isEditing ? (
-              <div className="edit-partnership-form" style={{ boxShadow: 'none', padding: 0 }}>
+              <div
+                className="edit-partnership-form"
+                style={{ boxShadow: "none", padding: 0 }}
+              >
                 {/* Edit form fields */}
                 <div className="detail-row">
                   <label htmlFor="edit-name">Name:</label>
@@ -287,7 +293,9 @@ const PartnershipDetails = ({
                 </div>
 
                 <div className="detail-row">
-                  <label htmlFor="edit-target-population">Target Population:</label>
+                  <label htmlFor="edit-target-population">
+                    Target Population:
+                  </label>
                   <select
                     id="edit-target-population"
                     name="target_population"
@@ -305,7 +313,9 @@ const PartnershipDetails = ({
                 </div>
 
                 <div className="detail-row">
-                  <label htmlFor="edit-contact-date">Contact Date History:</label>
+                  <label htmlFor="edit-contact-date">
+                    Contact Date History:
+                  </label>
                   <textarea
                     id="edit-contact-date"
                     name="contact_date"
@@ -388,7 +398,8 @@ const PartnershipDetails = ({
                               <li key={index}>
                                 {entry.date ? (
                                   <>
-                                    <strong>{entry.date}</strong>: {entry.contact}
+                                    <strong>{entry.date}</strong> -{" "}
+                                    {entry.contact.replace(/[;:\-\s]+$/, "")}
                                   </>
                                 ) : (
                                   entry.contact
@@ -450,7 +461,10 @@ const PartnershipDetails = ({
                 </>
               ) : (
                 <>
-                  <button onClick={() => setIsEditing(true)} className="blue-button">
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="blue-button"
+                  >
                     Edit Details
                   </button>
                   <button className="red-button" onClick={onClose}>

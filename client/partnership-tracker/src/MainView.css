@@ -910,7 +910,7 @@ button {
 }
 
 /* Avoid text selection interference */
-.notes-modal-fixed-layout * {
+.notes-modal-fixed-layout *:not(.close-button) {
   user-select: none;
 }
 

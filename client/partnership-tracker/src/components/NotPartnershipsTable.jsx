@@ -203,7 +203,7 @@ const NotPartnershipsTable = ({
               <th>Organization</th>
               <th>Target Population</th>
               <th>Contact Date</th>
-              <th>Type of Attempted Contact</th>
+              <th>Attempted Contact Type</th>
               <th>Notes</th>
             </tr>
           </thead>
@@ -222,7 +222,7 @@ const NotPartnershipsTable = ({
                   <td>{partner.organization_name || "N/A"}</td>
                   <td>{partner.target_population}</td>
                   <td>{recentDate || "N/A"}</td>
-                  <td>{(partner.contact_attempt, 30)}</td>
+                  <td>{partner.contact_attempt || "N/A"}</td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <button
                       className="view-notes-button"

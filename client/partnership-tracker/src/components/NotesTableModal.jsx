@@ -263,11 +263,10 @@ const NotesTableModal = ({
   const modalContent = (
     <div className="modal-overlay">
       <div className="notes-modal-fixed-layout" ref={modalRef}>
-        {/* Header */}
         <div className="modal-header">
           <h3>Notes for {objectName}</h3>
           <button className="close-button" onClick={onClose}>
-            X
+            ×
           </button>
         </div>
 

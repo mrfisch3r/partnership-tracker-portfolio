@@ -637,14 +637,29 @@ def add_simple_partner():
 #DELETE DATABASE API CALL, USE FOR TESTING AFTER ADDING DUMMY DATA
 @app.route("/api/clear-all", methods=["DELETE", "GET"])
 def clear_all():
+    # Clear main data tables
     db.session.query(OutreachEvents).delete()
     db.session.query(SeasonalEvents).delete()
     db.session.query(PotentialPartnerships).delete()
     db.session.query(NotPotentialPartnerships).delete()
     db.session.query(MonthlyUpdates).delete()
+    db.session.query(SiteEvent).delete()
+    db.session.query(Note).delete()
+    
+    # Clear additional tables requested
+    db.session.query(ChangeLog).delete()
+    db.session.query(TargetPopulation).delete()
+    
+    # Clear users but recreate default admin
+    db.session.query(Staff).delete()
+    
+    # Re-seed default admin to prevent lockout
+    admin = Staff(username="admin", email="admin@ukhc.com", role="owner")
+    admin.set_password("admin123")
+    db.session.add(admin)
 
     db.session.commit()
-    return {"MESSAGE": "ENTIRE DATABASE CLEARED."}
+    return {"MESSAGE": "ENTIRE DATABASE CLEARED. Default admin (admin/admin123) restored."}
 
 #___________________________________________________________________________________________________________
 
