@@ -368,6 +368,12 @@ def get_changelogs():
             
         result = []
         for log, username in logs:
+            # Convert UTC to Eastern Time
+            from datetime import timezone
+            import pytz
+            eastern = pytz.timezone('US/Eastern')
+            timestamp_et = log.timestamp.replace(tzinfo=pytz.utc).astimezone(eastern)
+            
             result.append({
                 "id": log.id,
                 "table_name": log.table_name,
@@ -375,7 +381,7 @@ def get_changelogs():
                 "user_id": log.user_id,
                 "username": username or f"User ID {log.user_id}", # Fallback if user deleted
                 "action": log.action,
-                "timestamp": log.timestamp.isoformat(),
+                "timestamp": timestamp_et.isoformat(),
                 "previous_data": log.previous_data, 
                 "new_data": log.new_data
             })
@@ -603,13 +609,17 @@ def get_notes(object_type, object_id):
     notes = Note.query.filter_by(object_type=object_type, object_id=object_id)\
                       .order_by(Note.created_at.desc()).all()
 
+    import pytz
+    eastern = pytz.timezone('US/Eastern')
+    
     return jsonify([
         {
             "id": n.id,
             "author": n.author,
             "note_text": n.note_text,
-            "created_at": n.created_at.isoformat(),
-            "updated_at": n.updated_at.isoformat() if n.updated_at else n.created_at.isoformat()
+            "created_at": n.created_at.replace(tzinfo=pytz.utc).astimezone(eastern).isoformat(),
+            "updated_at": (n.updated_at.replace(tzinfo=pytz.utc).astimezone(eastern).isoformat() 
+                          if n.updated_at else n.created_at.replace(tzinfo=pytz.utc).astimezone(eastern).isoformat())
         } for n in notes
     ])
     

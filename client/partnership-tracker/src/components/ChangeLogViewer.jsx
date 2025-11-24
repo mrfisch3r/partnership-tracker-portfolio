@@ -92,7 +92,16 @@ const ChangeLogViewer = () => {
           <tbody>
             {logs.map((log) => (
               <tr key={log.id}>
-                <td>{new Date(log.timestamp).toLocaleString()}</td>
+                <td>
+                  {new Date(log.timestamp).toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </td>
                 <td>{log.username}</td>
                 <td>
                   <span className={`badge badge-${log.action.toLowerCase()}`}>
