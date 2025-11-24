@@ -1948,3 +1948,26 @@ table {
 .delete-population-button:active {
   background-color: #b71c1c;
 }
+
+/* Change Log Viewer Styles */
+.badge {
+  padding: 5px 10px;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.8em;
+}
+
+.badge-create {
+  background-color: #28a745;
+}
+
+.badge-update {
+  background-color: #ffc107;
+  color: black;
+}
+
+.badge-delete {
+  background-color: #dc3545;
+}

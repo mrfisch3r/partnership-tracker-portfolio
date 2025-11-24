@@ -338,6 +338,49 @@ def delete_target_population(population_id):
         return jsonify({"error": str(e)}), 500
 
 
+# GET CHANGE LOGS (Admin/Owner only)
+@app.route("/api/changelogs", methods=["GET"])
+@jwt_required()
+def get_changelogs():
+    try:
+        # Get current user info
+        current_user_id = int(get_jwt_identity())
+        current_user = Staff.query.get(current_user_id)
+        
+        if not current_user:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Check if current user is admin or owner
+        if current_user.role not in ["admin", "owner"]:
+            return jsonify({"error": "Unauthorized. Admin or Owner role required"}), 403
+            
+        # Fetch logs, newest first
+        # We'll join with Staff table to get the username of the person who made the change
+        logs = db.session.query(ChangeLog, Staff.username)\
+            .outerjoin(Staff, ChangeLog.user_id == Staff.id)\
+            .order_by(ChangeLog.timestamp.desc())\
+            .limit(500)\
+            .all()
+            
+        result = []
+        for log, username in logs:
+            result.append({
+                "id": log.id,
+                "table_name": log.table_name,
+                "record_id": log.record_id,
+                "user_id": log.user_id,
+                "username": username or f"User ID {log.user_id}", # Fallback if user deleted
+                "action": log.action,
+                "timestamp": log.timestamp.isoformat(),
+                "previous_data": log.previous_data, 
+                "new_data": log.new_data
+            })
+            
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 def role_required(required_role):
     """Decorator to require a specific role stored in JWT additional claims.
 
@@ -1295,7 +1338,7 @@ def delete_note(note_id):
         return jsonify({"error": "Invalid user"}), 401
     
     # Only admins or owners can delete notes
-    if current_user.role not in ["admin", "owner"]:
+    if note.author != current_user.username and current_user.role not in ["admin", "owner"]:
         return jsonify({"error": "Unauthorized. Admin or Owner role required"}), 403
     
     db.session.delete(note)

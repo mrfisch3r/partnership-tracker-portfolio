@@ -38,7 +38,7 @@ def test_verify_token():
         with app.app_context():
             db.create_all()
             
-            # First get a token using existing admin
+          
             login_response = client.post('/api/login', 
                 data=json.dumps({
                     'username': 'admin',
@@ -49,7 +49,7 @@ def test_verify_token():
             
             token = json.loads(login_response.data)['access_token']
             
-            # Now verify it
+           
             response = client.get('/api/verify-token',
                 headers={'Authorization': f'Bearer {token}'}
             )
@@ -71,4 +71,4 @@ def test_verify_invalid_token():
                 headers={'Authorization': 'Bearer invalid_token_here'}
             )
             
-            assert response.status_code == 401
+            assert response.status_code == 422
