@@ -126,183 +126,193 @@ const NotPartnershipDetails = ({
   };
 
   return (
-    <div className="partner-details">
-      {/* Close button in top right corner */}
-      <button className="close-button" onClick={onClose}>
-        X
-      </button>
-      <h3>Not Potential Partnership Details</h3>
-
-      {isEditing ? (
-        <div className="edit-partnership-form">
-          {/* Edit form fields */}
-          <div className="detail-row">
-            <label htmlFor="edit-name">Name:</label>
-            <input
-              id="edit-name"
-              name="name"
-              value={editFormData.name || ""}
-              onChange={handleChange}
-            />
+    <>
+      <div className="modal-backdrop" onClick={onClose}>
+        <div 
+          className="modal-fixed-layout"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="modal-header">
+            <h3>Not Potential Partnership Details</h3>
+            <button className="close-button" onClick={onClose}>×</button>
           </div>
 
-          <div className="detail-row">
-            <label htmlFor="edit-organization">Organization:</label>
-            <input
-              id="edit-organization"
-              name="organization_name"
-              value={editFormData.organization_name || ""}
-              onChange={handleChange}
-            />
-          </div>
+          <div className="modal-content-area">
+            {isEditing ? (
+              <div className="edit-partnership-form" style={{ boxShadow: 'none', padding: 0 }}>
+                {/* Edit form fields */}
+                <div className="detail-row">
+                  <label htmlFor="edit-name">Name:</label>
+                  <input
+                    id="edit-name"
+                    name="name"
+                    value={editFormData.name || ""}
+                    onChange={handleChange}
+                  />
+                </div>
 
-          <div className="detail-row">
-            <label htmlFor="edit-contacts">Contact Info:</label>
-            <textarea
-              id="edit-contacts"
-              name="contacts"
-              value={editFormData.contacts || ""}
-              onChange={handleChange}
-              rows={4}
-            />
-          </div>
+                <div className="detail-row">
+                  <label htmlFor="edit-organization">Organization:</label>
+                  <input
+                    id="edit-organization"
+                    name="organization_name"
+                    value={editFormData.organization_name || ""}
+                    onChange={handleChange}
+                  />
+                </div>
 
-          <div className="detail-row">
-            <label htmlFor="edit-target-population">Target Population:</label>
-            <select
-              id="edit-target-population"
-              name="target_population"
-              value={editFormData.target_population || ""}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select target population...</option>
-              {targetPopulations.map((pop) => (
-                <option key={pop.id} value={pop.name}>
-                  {pop.name}
-                </option>
-              ))}
-            </select>
-          </div>
+                <div className="detail-row">
+                  <label htmlFor="edit-contacts">Contact Info:</label>
+                  <textarea
+                    id="edit-contacts"
+                    name="contacts"
+                    value={editFormData.contacts || ""}
+                    onChange={handleChange}
+                    rows={4}
+                  />
+                </div>
 
-          <div className="detail-row">
-            <label htmlFor="edit-contact-date">Contact Date:</label>
-            <textarea
-              id="edit-contact-date"
-              name="contact_date"
-              value={editFormData.contact_date || ""}
-              onChange={handleChange}
-              rows={3}
-            />
-          </div>
+                <div className="detail-row">
+                  <label htmlFor="edit-target-population">Target Population:</label>
+                  <select
+                    id="edit-target-population"
+                    name="target_population"
+                    value={editFormData.target_population || ""}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select target population...</option>
+                    {targetPopulations.map((pop) => (
+                      <option key={pop.id} value={pop.name}>
+                        {pop.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-          <div className="detail-row">
-            <label htmlFor="edit-contact-attempt">
-              Type of Attempted Contact:
-            </label>
-            <textarea
-              id="edit-contact-attempt"
-              name="contact_attempt"
-              value={editFormData.contact_attempt || ""}
-              onChange={handleChange}
-              rows={3}
-            />
-          </div>
+                <div className="detail-row">
+                  <label htmlFor="edit-contact-date">Contact Date:</label>
+                  <textarea
+                    id="edit-contact-date"
+                    name="contact_date"
+                    value={editFormData.contact_date || ""}
+                    onChange={handleChange}
+                    rows={3}
+                  />
+                </div>
 
-          {/* Save and Cancel buttons with Delete button */}
-          <div className="actions">
-            <button
-              onClick={handleSaveChanges}
-              disabled={isSaving}
-              className="save-button"
-            >
-              {isSaving ? "Saving..." : "Save Changes"}
-            </button>
-            <button
-              onClick={() => {
-                setEditFormData({ ...partner });
-                setIsEditing(false);
-              }}
-              className="cancel-button"
-            >
-              Cancel
-            </button>
-            <button onClick={handleDeleteClick} className="delete-button">
-              Delete Not Potential Partner
-            </button>
-          </div>
+                <div className="detail-row">
+                  <label htmlFor="edit-contact-attempt">
+                    Type of Attempted Contact:
+                  </label>
+                  <textarea
+                    id="edit-contact-attempt"
+                    name="contact_attempt"
+                    value={editFormData.contact_attempt || ""}
+                    onChange={handleChange}
+                    rows={3}
+                  />
+                </div>
 
-          {/* Display save message */}
-          {saveMessage && (
-            <p
-              className={
-                saveMessage.includes("Error")
-                  ? "error-message"
-                  : "success-message"
-              }
-            >
-              {saveMessage}
-            </p>
-          )}
-        </div>
-      ) : (
-        <>
-          {/* Display-only view */}
-          <div className="detail-row">
-            <strong>Name:</strong> {partner.name || "N/A"}
-          </div>
-
-          <div className="detail-row">
-            <strong>Organization:</strong> {partner.organization_name || "N/A"}
-          </div>
-
-          <div className="detail-row">
-            <strong>Contact Info:</strong>
-            <div className="contact-info">
-              {formatContacts(partner.contacts)}
-            </div>
-          </div>
-
-          <div className="detail-row">
-            <strong>Target Population:</strong>
-            <div>{partner.target_population || "Not specified"}</div>
-          </div>
-
-          <div className="detail-row">
-            <strong>Contact Date:</strong> {partner.contact_date || "N/A"}
-          </div>
-
-          <div className="detail-row">
-            <strong>Type of Attempted Contact:</strong>{" "}
-            {partner.contact_attempt || "Not specified"}
-          </div>
-
-          <div className="detail-row">
-            <strong>Notes:</strong>
-            {partner.notes && partner.notes.trim() ? (
-              <button
-                className="view-notes-button"
-                onClick={() => setShowNotesModal(true)}
-              >
-                View Notes
-              </button>
+                {/* Display save message */}
+                {saveMessage && (
+                  <p
+                    className={
+                      saveMessage.includes("Error")
+                        ? "error-message"
+                        : "success-message"
+                    }
+                  >
+                    {saveMessage}
+                  </p>
+                )}
+              </div>
             ) : (
-              <div>No notes available</div>
+              <>
+                {/* Display-only view */}
+                <div className="detail-row">
+                  <strong>Name:</strong> {partner.name || "N/A"}
+                </div>
+
+                <div className="detail-row">
+                  <strong>Organization:</strong> {partner.organization_name || "N/A"}
+                </div>
+
+                <div className="detail-row">
+                  <strong>Contact Info:</strong>
+                  <div className="contact-info">
+                    {formatContacts(partner.contacts)}
+                  </div>
+                </div>
+
+                <div className="detail-row">
+                  <strong>Target Population:</strong>
+                  <div>{partner.target_population || "Not specified"}</div>
+                </div>
+
+                <div className="detail-row">
+                  <strong>Contact Date:</strong> {partner.contact_date || "N/A"}
+                </div>
+
+                <div className="detail-row">
+                  <strong>Type of Attempted Contact:</strong>{" "}
+                  {partner.contact_attempt || "Not specified"}
+                </div>
+
+                <div className="detail-row">
+                  <strong>Notes:</strong>
+                  {partner.notes && partner.notes.trim() ? (
+                    <button
+                      className="view-notes-button"
+                      onClick={() => setShowNotesModal(true)}
+                    >
+                      View Notes
+                    </button>
+                  ) : (
+                    <div>No notes available</div>
+                  )}
+                </div>
+              </>
             )}
           </div>
-        </>
-      )}
 
-      {/* Action buttons - only Edit and Close in view mode */}
-      <div className="actions">
-        {!isEditing && (
-          <button onClick={() => setIsEditing(true)} className="blue-button">
-            Edit Details
-          </button>
-        )}
-        <button onClick={onClose} className="red-button">
-          Close
-        </button>
+          <div className="modal-footer">
+            <div className="actions" style={{ margin: 0 }}>
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleSaveChanges}
+                    disabled={isSaving}
+                    className="save-button"
+                  >
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditFormData({ ...partner });
+                      setIsEditing(false);
+                    }}
+                    className="cancel-button"
+                  >
+                    Cancel
+                  </button>
+                  <button onClick={handleDeleteClick} className="delete-button">
+                    Delete Not Potential Partner
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => setIsEditing(true)} className="blue-button">
+                    Edit Details
+                  </button>
+                  <button onClick={onClose} className="red-button">
+                    Close
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Use the NotesTableModal component */}
@@ -323,7 +333,7 @@ const NotPartnershipDetails = ({
         itemName={partner.name || "this not potential partner"}
         onDeleteSuccess={handleDeleteSuccess}
       />
-    </div>
+    </>
   );
 };
 

@@ -411,6 +411,9 @@ button {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Styles shared between partner-details and comments-section */
@@ -444,7 +447,7 @@ button {
   font-size: 1.2rem;
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 4px;
   cursor: pointer;
 }
 
@@ -793,7 +796,8 @@ button {
 }
 
 /* Notes Modal with Fixed Layout */
-.notes-modal-fixed-layout {
+.notes-modal-fixed-layout,
+.modal-fixed-layout {
   position: relative;
   width: 80%;
   max-width: 800px;
@@ -833,7 +837,7 @@ button {
   font-size: 1.2rem;
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1048,9 +1052,9 @@ button.red-button:hover {
   max-height: 300px;
   overflow-y: auto;
   overflow-x: auto;
-  padding: 1rem;
-  border: 1px solid #eee;
-  background-color: #f9f9f9;
+  padding: 0;
+  border: none;
+  background-color: transparent;
   margin-top: 0.5rem;
   white-space: pre-wrap;
   line-height: 1.5;
@@ -1078,8 +1082,6 @@ button.red-button:hover {
 }
 
 /* For tables showing monthly updates */
-.partnership-table table {
-}
 .partnership-table table td {
   max-width: 250px;
   overflow: hidden;

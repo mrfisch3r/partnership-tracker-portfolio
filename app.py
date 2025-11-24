@@ -354,13 +354,17 @@ def get_changelogs():
         if current_user.role not in ["admin", "owner"]:
             return jsonify({"error": "Unauthorized. Admin or Owner role required"}), 403
             
-        # Fetch logs, newest first
-        # We'll join with Staff table to get the username of the person who made the change
-        logs = db.session.query(ChangeLog, Staff.username)\
+        # Pagination parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        # Fetch logs with pagination
+        pagination = db.session.query(ChangeLog, Staff.username)\
             .outerjoin(Staff, ChangeLog.user_id == Staff.id)\
             .order_by(ChangeLog.timestamp.desc())\
-            .limit(500)\
-            .all()
+            .paginate(page=page, per_page=per_page, error_out=False)
+            
+        logs = pagination.items
             
         result = []
         for log, username in logs:
@@ -376,7 +380,12 @@ def get_changelogs():
                 "new_data": log.new_data
             })
             
-        return jsonify(result), 200
+        return jsonify({
+            "logs": result,
+            "total_pages": pagination.pages,
+            "current_page": page,
+            "total_items": pagination.total
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
