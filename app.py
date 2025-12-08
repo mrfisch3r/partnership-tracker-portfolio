@@ -53,7 +53,57 @@ with app.app_context():
         db.session.commit()
         print("Upgraded admin to owner role!")
     
-    
+
+#____________________________________________________________________________________________________
+
+#API CALL FOR CREATING A COUNTY TABLE
+
+# CREATE A NEW COUNTY TABLE
+@app.route("/api/create_county_table", methods=["POST"])
+@jwt_required()
+def create_county_table():
+    data = request.json
+    county_name = data.get("county_name")
+
+    if not county_name:
+        return jsonify({"error": "Missing 'county_name' field"}), 400
+
+    # Sanitize table name
+    table_name = county_name.strip().replace(" ", "_").lower()
+
+    inspector = db.inspect(db.engine)
+
+    # Table already exists
+    if table_name in inspector.get_table_names():
+        return jsonify({"error": f"County table '{county_name}' already exists."}), 400
+
+    # Attempt to create the table
+    CountyTable = create_county_model(county_name)
+    if CountyTable is None:
+        return jsonify({"error": "Failed to create county table."}), 500
+
+    # Log who created the table
+    user_id = int(get_jwt_identity())
+    staff_user = Staff.query.get(user_id)
+    username = staff_user.username if staff_user else "Unknown User"
+
+    # --- Optional notes about the table creation ---
+    note_text = data.get("notes")
+    if note_text and note_text.strip():
+        new_note = Note(
+            object_id=None,          # no row exists yet
+            object_type=table_name,  # ties note to the table itself
+            author=username,
+            note_text=note_text.strip()
+        )
+        db.session.add(new_note)
+        db.session.commit()
+
+    return jsonify({
+        "message": f"County table '{county_name}' created successfully.",
+        "table_name": table_name
+    })    
+
 #_______________________________________________________________________________________________________________________________
 
 #FUNCTIONS REGARDING THE STAFF TABLE
@@ -722,21 +772,31 @@ def upload_seasonal_events():
 def upload_partners():
     if "file" not in request.files:
         return jsonify({"message": "No file part"}), 400
+
     file = request.files["file"]
     if file.filename == "":
         return jsonify({"message": "No file selected"}), 400
-    # Save the file temporarily
+
     temp_dir = "temp_files"
     os.makedirs(temp_dir, exist_ok=True)
     temp_path = os.path.join(temp_dir, file.filename)
     file.save(temp_path)
+
     try:
         potential_partnerships_sheet_reader(temp_path)
     except Exception as e:
         return jsonify({"message": "Error processing file", "error": str(e)}), 500
     finally:
-        os.remove(temp_path)
+        # Safe deletion
+        try:
+            os.remove(temp_path)
+        except PermissionError:
+            print(f"Could not delete temp file (still locked): {temp_path}")
+        except Exception as e:
+            print(f"Error deleting temp file: {e}")
+
     return jsonify({"message": "File uploaded and data imported successfully."})
+
 
 
 #UPLOAD Not Potential Partners SHEET
@@ -1163,21 +1223,22 @@ def add_county_entry():
     db.session.add(new_entry)
     db.session.commit()
     
+    # Get user info
     user_id = int(get_jwt_identity())   # convert string ID to int
     staff_user = Staff.query.get(user_id)
     username = staff_user.username if staff_user else "Unknown User"
-    
-    # Now log the creation
+
+    # Log creation
     log_change(new_entry, user_id=user_id, action="CREATE")
-    
-    
-    # --- If a note was provided, create it ---
+
+    # --- Handle notes (same system as MonthlyUpdates) ---
     note_text = data.get("notes")
     new_note = None
+
     if note_text and note_text.strip():
         new_note = Note(
             object_id=new_entry.id,
-            object_type=table_name,
+            object_type=table_name,     # dynamic based on county table
             author=username,
             note_text=note_text.strip()
         )
@@ -1186,7 +1247,10 @@ def add_county_entry():
 
     return jsonify({
         "message": f"Entry added to '{county_name}' table successfully.",
-        "entry": {column.name: getattr(new_entry, column.name) for column in new_entry.__table__.columns}
+        "entry": {
+            column.name: getattr(new_entry, column.name)
+            for column in new_entry.__table__.columns
+        }
     })
     
     
@@ -1637,26 +1701,21 @@ def update_county_entry(id):
     if not county_name:
         return jsonify({"error": "Missing 'county_name' field"}), 400
 
-    # Sanitize table name
     table_name = county_name.strip().replace(" ", "_").lower()
 
-    # Check if table exists
     inspector = db.inspect(db.engine)
     if table_name not in inspector.get_table_names():
         return jsonify({"error": f"County table '{county_name}' does not exist."}), 404
 
-    # Dynamically create model class for this county table
-    class CountyTable(DynamicCounty):
-        __tablename__ = table_name
+    # Get or create cached model
+    CountyTable = get_county_model(table_name)
 
-    # Get the entry to update
     entry = db.session.get(CountyTable, id)
     if not entry:
         return jsonify({"error": f"Entry with ID {id} not found in '{county_name}'."}), 404
-    
+
     previous_snapshot = model_to_dict(entry)
 
-    # Explicitly assign fields (like other endpoints)
     entry.need = data.get("need", entry.need)
     entry.agency = data.get("agency", entry.agency)
     entry.county = data.get("county", entry.county)
@@ -1671,22 +1730,19 @@ def update_county_entry(id):
     entry.other = data.get("other", entry.other)
 
     db.session.commit()
-    
-    user_id = int(get_jwt_identity())   # convert string ID to int
+
+    user_id = int(get_jwt_identity())
     staff_user = Staff.query.get(user_id)
     username = staff_user.username if staff_user else "Unknown User"
-    
+
     log_change(
         instance=entry,
-        user_id=user_id,  # Replace with current logged-in user ID
+        user_id=user_id,
         action="UPDATE",
-        previous_instance=previous_snapshot # use snapshot for previous_data
+        previous_instance=previous_snapshot
     )
-    
-    
-    # --- If the staff added a note, save it to the Notes table ---
+
     note_text = data.get("notes")
-    new_note = None
     if note_text and note_text.strip():
         new_note = Note(
             object_id=entry.id,
@@ -1927,18 +1983,6 @@ def delete_county_entry(id):
     if not county_name:
         return jsonify({"error": "Missing 'county_name' field"}), 400
 
-    try:
-        current_user_id = int(get_jwt_identity())
-    except (ValueError, TypeError):
-        return jsonify({"error": "Invalid user"}), 401
-
-    current_user = Staff.query.get(current_user_id)
-    if not current_user:
-        return jsonify({"error": "User not found"}), 404
-
-    if current_user.role not in ["admin", "owner"]:
-        return jsonify({"error": "Unauthorized. Admin or Owner role required"}), 403
-
     # Sanitize table name
     table_name = county_name.strip().replace(" ", "_").lower()
 
@@ -1958,10 +2002,13 @@ def delete_county_entry(id):
     
     previous_snapshot = model_to_dict(entry)
     
+    identity = get_jwt_identity()
+    user_id = identity["id"]
+
     # Log BEFORE deleting (so we still have the instance)
     log_change(
         instance=entry,          # pass the actual entry
-        user_id=current_user_id,               # replace with current logged-in user ID
+        user_id=user_id,               # replace with current logged-in user ID
         action="DELETE",
         previous_instance=previous_snapshot
     )
@@ -1977,4 +2024,5 @@ def delete_county_entry(id):
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
+
 
