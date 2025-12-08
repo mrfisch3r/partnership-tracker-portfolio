@@ -2,6 +2,8 @@ from models import db
 from models import *
 from sqlalchemy import func
 import pandas as pd
+dynamic_models = {}
+
 
 def search_entries(model, column_name, search_string):
     """
@@ -62,24 +64,25 @@ def sort_entries_by_date(model, column_name, ascending=True):
     return results
 
 
-#outreach and seasonal events sheets have same format so this function is for them both
+# Outreach and seasonal events sheets have same format so this function is for them both
 def events_sheet_reader(file_path, sheet_keywords, model):
-    xls = pd.ExcelFile(file_path)
-    sheet_name = None
+    # Use context manager to ensure file closes properly
+    with pd.ExcelFile(file_path, engine="openpyxl") as xls:
+        sheet_name = None
 
-    # Case-insensitive sheet name matching
-    for name in xls.sheet_names:
-        if sheet_keywords.lower() in name.lower():
-            sheet_name = name
-            break
+        # Case-insensitive sheet name matching
+        for name in xls.sheet_names:
+            if sheet_keywords.lower() in name.lower():
+                sheet_name = name
+                break
 
-    # If no valid sheet is found, exit function
-    if not sheet_name:
-        print(f"No relevant sheet found ({sheet_keywords}). Skipping import.")
-        return
+        # If no valid sheet is found, exit function
+        if not sheet_name:
+            print(f"No relevant sheet found ({sheet_keywords}). Skipping import.")
+            return
 
-    # Read the identified sheet, skipping first 2 rows
-    df = pd.read_excel(file_path, sheet_name=sheet_name, skiprows=2)
+        # Read the identified sheet, skipping first 2 rows
+        df = pd.read_excel(xls, sheet_name=sheet_name, skiprows=2)
 
     # Column Mapping
     column_mapping = {
@@ -98,7 +101,7 @@ def events_sheet_reader(file_path, sheet_keywords, model):
     # Handle missing columns safely
     df = df.reindex(columns=column_mapping.values())
 
-    # Convert DataFrame to ORM objects
+    # Convert DataFrame rows to ORM objects
     event_objects = [
         model(
             name=row["name"],
@@ -128,38 +131,38 @@ def seasonal_events_sheet_reader(file_path):
 
 #Read the Potential Partnerships sheet into corresponding table
 def potential_partnerships_sheet_reader(file_path):
-    xls = pd.ExcelFile(file_path)
-    sheet_name = None
+    # Ensure Excel file is closed after reading
+    with pd.ExcelFile(file_path) as xls:
+        sheet_name = None
 
-    # Case-insensitive sheet name check
-    for name in xls.sheet_names:
-        if "potential partnerships" in name.lower():
-            sheet_name = name
-            break
+        # Case-insensitive sheet name check
+        for name in xls.sheet_names:
+            if "potential partnerships" in name.lower():
+                sheet_name = name
+                break
 
-    # If no valid sheet is found, exit function
-    if not sheet_name:
-        print("No relevant sheet found (Potential Partnerships). Skipping import.")
-        return
+        if not sheet_name:
+            print("No relevant sheet found (Potential Partnerships). Skipping import.")
+            return
 
-    # Read the identified sheet, skipping first 2 rows
-    df = pd.read_excel(file_path, sheet_name=sheet_name, skiprows=2)
+        # Read Excel sheet (file still open inside WITH)
+        df = pd.read_excel(xls, sheet_name=sheet_name, skiprows=2)
+
+    # File is now CLOSED here — safe to delete later
 
     # Column Mapping
     column_mapping = {
         "Name": "name",
         "Organization": "organization_name",
-        "Contact Info": "contacts",  # Needs special handling
+        "Contact Info": "contacts",
         "Target Population": "target_population",
         "Contact Date": "contact_date",
         "Type of Attempted Contact/Date of Next Attempt:": "next_contact",
         "Notes:": "notes"
     }
 
-    # Rename DataFrame columns
+    # Normalize columns
     df = df.rename(columns=column_mapping)
-
-    # Handle missing columns safely
     df = df.reindex(columns=column_mapping.values())
 
     # Convert DataFrame to ORM objects
@@ -172,10 +175,11 @@ def potential_partnerships_sheet_reader(file_path):
             contact_date=row["contact_date"],
             next_contact=row["next_contact"],
             notes=row["notes"]
-        ) for _, row in df.iterrows()
+        )
+        for _, row in df.iterrows()
     ]
 
-    # Bulk insert into the database
+    # Bulk insert
     db.session.bulk_save_objects(partnership_objects)
     db.session.commit()
 
@@ -184,28 +188,28 @@ def potential_partnerships_sheet_reader(file_path):
     
 #Read the Not Potential Partnerships sheet into corresponding table
 def not_potential_partnerships_sheet_reader(file_path):
-    xls = pd.ExcelFile(file_path)
-    sheet_name = None
+    # Use ExcelFile with context manager so Windows releases the file
+    with pd.ExcelFile(file_path) as xls:
+        sheet_name = None
 
-    # Case-insensitive sheet name check
-    for name in xls.sheet_names:
-        if "not potential partnerships" in name.lower():
-            sheet_name = name
-            break
+        # Case-insensitive match
+        for name in xls.sheet_names:
+            if "not potential partnerships" in name.lower():
+                sheet_name = name
+                break
 
-    # If no valid sheet is found, exit function
-    if not sheet_name:
-        print("No relevant sheet found (Not Potential Partnerships). Skipping import.")
-        return
+        if not sheet_name:
+            print("No relevant sheet found (Not Potential Partnerships). Skipping import.")
+            return
 
-    # Read the identified sheet, skipping first 2 rows
-    df = pd.read_excel(file_path, sheet_name=sheet_name, skiprows=2)
+        # Read sheet while xls is still open
+        df = pd.read_excel(xls, sheet_name=sheet_name, skiprows=2)
 
-    # Column Mapping
+    # Column mapping
     column_mapping = {
         "Name": "name",
         "Organization": "organization_name",
-        "Contact Info": "contacts",  # Needs special handling
+        "Contact Info": "contacts",
         "Target Population": "target_population",
         "Contact Date": "contact_date",
         "Type of Attempted Contact:": "contact_attempt",
@@ -215,24 +219,25 @@ def not_potential_partnerships_sheet_reader(file_path):
     # Rename columns
     df = df.rename(columns=column_mapping)
 
-    # Handle missing columns safely
+    # Ensure all expected columns exist
     df = df.reindex(columns=column_mapping.values())
 
-    # Convert DataFrame to ORM objects
-    partnership_objects = [
+    # Convert rows → ORM objects
+    objects = [
         NotPotentialPartnerships(
-            name=row["name"],
-            organization_name=row["organization_name"],
-            contacts=row["contacts"],
-            target_population=row["target_population"],
-            contact_date=row["contact_date"],
-            contact_attempt=row["contact_attempt"],
-            notes=row["notes"]
-        ) for _, row in df.iterrows()
+            name=row.get("name"),
+            organization_name=row.get("organization_name"),
+            contacts=row.get("contacts"),
+            target_population=row.get("target_population"),
+            contact_date=row.get("contact_date"),
+            contact_attempt=row.get("contact_attempt"),
+            notes=row.get("notes"),
+        )
+        for _, row in df.iterrows()
     ]
 
-    # Bulk insert into the database
-    db.session.bulk_save_objects(partnership_objects)
+    # Insert into DB
+    db.session.bulk_save_objects(objects)
     db.session.commit()
 
     print(f"Data successfully imported from '{sheet_name}' into NotPotentialPartnerships!")
@@ -240,26 +245,24 @@ def not_potential_partnerships_sheet_reader(file_path):
     
 #Read the Monthly Updates/ Monthly Highlights sheet into corresponding table
 def monthly_updates_sheet_reader(file_path):
-    xls = pd.ExcelFile(file_path)
-    sheet_name = None
 
-    # Case-insensitive check for sheet names
-    for name in xls.sheet_names:
-        lower_name = name.lower()  # Convert to lowercase for comparison
-        if "monthly updates" in lower_name:
-            sheet_name = name
-            break
-        elif "monthly highlights" in lower_name:
-            sheet_name = name
-            break
+    # Ensure file is closed properly
+    with pd.ExcelFile(file_path) as xls:
+        sheet_name = None
 
-    # If no valid sheet was found, print an error and exit function
-    if not sheet_name:
-        print("No relevant sheet found (Monthly Updates or Monthly Highlights). Skipping import.")
-        return
+        # Case-insensitive check for sheet names
+        for name in xls.sheet_names:
+            lower_name = name.lower()
+            if "monthly updates" in lower_name or "monthly highlights" in lower_name:
+                sheet_name = name
+                break
 
-    # Read the identified sheet, skipping first 2 rows
-    df = pd.read_excel(file_path, sheet_name=sheet_name, skiprows=2)
+        if not sheet_name:
+            print("No relevant sheet found (Monthly Updates or Monthly Highlights). Skipping import.")
+            return
+
+        # Read sheet
+        df = pd.read_excel(xls, sheet_name=sheet_name, skiprows=2)
 
     # Column Mapping
     column_mapping = {
@@ -269,27 +272,32 @@ def monthly_updates_sheet_reader(file_path):
         "Other Additional Notes to Share from you for the month?": "notes",
     }
 
-    # Rename DataFrame columns
     df = df.rename(columns=column_mapping)
 
-    # Handle missing columns safely
+    # Keep only mapped columns
     df = df.reindex(columns=column_mapping.values())
 
-    # Convert DataFrame to ORM objects
+    # 🟢 ESSENTIAL FIX: Convert Excel/Pandas dates → strings
+    if "month_year" in df.columns:
+        df["month_year"] = df["month_year"].astype(str)
+
+    # Convert to ORM objects
     update_objects = [
         MonthlyUpdates(
             month_year=row["month_year"],
             major_findings=row["major_findings"],
             barriers_and_solutions=row["barriers_and_solutions"],
             notes=row["notes"]
-        ) for _, row in df.iterrows()
+        )
+        for _, row in df.iterrows()
     ]
 
-    # Bulk insert into the database
     db.session.bulk_save_objects(update_objects)
     db.session.commit()
 
     print(f"Data successfully imported from '{sheet_name}' into MonthlyUpdates!")
+
+
     
  
 #Create a table for a county   
@@ -313,6 +321,19 @@ def create_county_model(county_name):
 
     return CountyTable
 
+
+def get_county_model(table_name):
+    # If already created, return from cache
+    if table_name in dynamic_models:
+        return dynamic_models[table_name]
+
+    # Otherwise dynamically create it
+    class CountyTable(DynamicCounty):
+        __tablename__ = table_name
+        __table_args__ = {'extend_existing': True}  # prevent duplicate table errors
+
+    dynamic_models[table_name] = CountyTable
+    return CountyTable
 
 #Create an instance of the model/table into a dict
 def model_to_dict(instance):
