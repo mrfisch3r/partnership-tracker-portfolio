@@ -23,6 +23,14 @@ A web application to centralize the data and make it easier for UK HealthCare st
 - **Backend:** Flask + Flask-CORS + Flask-SQLAlchemy (REST API / JSON)
 - **Data:** SQLAlchemy ORM + SQLite
 
+## Screenshots
+
+### Architecture
+![Architecture diagram](docs/architecture_diagram.png)
+
+### Login
+![Login screen](docs/login_screen.png)
+
 ## My contributions (Kevin Dawson-Fischer)
 - Led **frontend development** (React) and UI integration for the prototype
 - Coordinated **team execution** (planning, task breakdown, keeping work moving despite feedback delays)
@@ -41,3 +49,5 @@ No patient/PHI data is included in this repository. Any example data is non-sens
 
 ## Status
 Portfolio snapshot — not under active development.
+
+
